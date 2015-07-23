@@ -114,7 +114,7 @@ void test_poisson_uni() {
 	bcm.set_bc();
 	//bcm.draw_ghost_node("gh.txt");
 	Float tol = 1e-6;
-	pe.set_f_term(f_fun);
+	pe.set_f(f_fun);
 	pe.pforest->show_as_contour(3);
 	pe.solve(tol);
 	pe.show();
@@ -186,7 +186,7 @@ void test_poissons_adp() {
 	MatrixSCR<Float> mat;
 	arrayListV<Float> b;
 	Float tol = 1e-10;
-	pe.set_f_term(f_fun);
+	pe.set_f(f_fun);
 	Float t = get_wall_time();
 	pe.solve(tol);
 	cout.precision(7);
@@ -275,7 +275,7 @@ void test_poissons_1(int level, Float& norm1, Float& norm2, Float& normi) {
 	MatrixSCR<Float> mat;
 	arrayListV<Float> b;
 	Float tol = 1e-10;
-	pe.set_f_term(f_fun_1);
+	pe.set_f(f_fun_1);
 	Float t = get_wall_time();
 	pe.solve(tol);
 	cout.precision(7);
@@ -367,7 +367,7 @@ void test_poissons_1_adp(int level, Float& norm1, Float& norm2, Float& normi) {
 	MatrixSCR<Float> mat;
 	arrayListV<Float> b;
 	Float tol = 1e-7;
-	pe.set_f_term(f_fun_1);
+	pe.set_f(f_fun_1);
 	Float t = get_wall_time();
 	pe.solve(tol);
 	cout.precision(7);

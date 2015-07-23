@@ -429,7 +429,7 @@ void interpolate_expression_on_axis_2f( // 2D QuadTree Node
 		Exp2D& exp,        //Expression
 		BCManager<Dimension_2D>& bcm //
 		);
-inline void interpolate_expression_on_axis_2b( // 2D QuadTree Node
+void interpolate_expression_on_axis_2b( // 2D QuadTree Node
 		pQTNode pc,  //node
 		CSAxis axis, //axix
 		Float dis,   //distance to center of pn with sign
@@ -741,35 +741,7 @@ inline void _exp_interplolate_2node( //
 	exp = linear_interpolation(x, x1, y1, x2, tmp_exp);
 }
 
-inline void interpolate_expression_on_axis_2b( // 2D QuadTree Node
-		pQTNode pc,  //node
-		CSAxis axis, //axix
-		Float dis,   //distance to center of pn with sign
-		Exp2D& exp   //Expression
-		) {
-	ASSERT(pc != NULL_PTR);
-	ASSERT(T_dis_check(pc, axis, dis));
-	ASSERT(axis != CSAxis_Z && axis != ErrCSAxis);
-	//special case: there is no neighbor node
-	if (dis == 0) {
-		T_exp_1node(pc, exp);
-		return;
-	}
-	// axis and dis to direction
-	SPDirection dir =
-			(axis == CSAxis_X) ?
-					(dis < 0 ? SPD_IP : SPD_IM) : (dis < 0 ? SPD_JP : SPD_JM);
-	pQTNode pn = NULL_PTR;
-	if (0 == T_find_neighbor_2(pc, dir, pn)) {  //
-		T_exp_1node(pc, exp);
-		return;
-	} else { //pn!=NULL
-		_exp_interplolate_2node(pc,  //node
-				pn, axis,                 //axis
-				dis,                 //distance to center of pn
-				exp);
-	}
-}
+
 
 
 

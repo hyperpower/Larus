@@ -24,13 +24,7 @@ namespace Larus {
 //   ▽•(bata(x,y)  ▽phi(x,y)  ) = f(x,y)     2D --version
 //   ▽•(bata(x,y,z)▽phi(x,y,z)) = f(x,y,z)   3D --version
 
-class Poisson_idx: public array_3<LarusDef::size_type> {
-public:
-	typedef LarusDef::size_type st;
-	Poisson_idx(const st& beta_idx, const st& phi_idx, const st& f_idx) :
-			array_3<st>(beta_idx, phi_idx, f_idx) {
-	}
-};
+
 
 template<class DIMENSION>
 class Poisson_Eq: public ObjectBase {
@@ -59,9 +53,9 @@ public:
 
 	int _f_term(typename Forest_::pNode pn, Expression& exp);
 
-	int set_f_term(pfun_f pfun);
-
-	int set_beta_term(pfun_f pfun);
+	void _set_val(st idx, pfun_f pfun);
+	void set_f(pfun_f pfun);
+	void set_beta(pfun_f pfun);
 	//
 	int _node_exp(typename Forest_::pNode pn, Expression& exp);
 	int _face_scheme_gradient(typename Forest_::pFace pface, Expression& exp);
@@ -95,34 +89,30 @@ int Poisson_Eq<DIMENSION>::_f_term(typename Forest_::pNode pn,
 }
 
 template<class DIMENSION>
-int Poisson_Eq<DIMENSION>::set_f_term(
-		typename Poisson_Eq<DIMENSION>::pfun_f pfun) {
+void Poisson_Eq<DIMENSION>::_set_val(st idx, pfun_f pfun)
+{
 	for (typename Forest_::iterator it = pforest->begin(); it != pforest->end();
 			++it) {
 		if (DIMENSION::DIM == 2) {
-			it->data->aCenterData[f_idx] = pfun(it->cell->getCPX(),
+			it->data->aCenterData[idx] = pfun(it->cell->getCPX(),
 					it->cell->getCPY(), 0);
 		} else {
-			it->data->aCenterData[f_idx] = pfun(it->cell->getCPX(),
+			it->data->aCenterData[idx] = pfun(it->cell->getCPX(),
 					it->cell->getCPY(), it->cell->getCPZ());
 		}
 	}
-	return 1;
 }
 
 template<class DIMENSION>
-int Poisson_Eq<DIMENSION>::set_beta_term(
+void Poisson_Eq<DIMENSION>::set_f(
 		typename Poisson_Eq<DIMENSION>::pfun_f pfun) {
-	for (typename Forest_::iterator it = pforest->begin(); it != pforest->end();
-			++it) {
-		if (DIMENSION::DIM == 2) {
-			it->data->aCenterData[beta_idx] = pfun(it->cell->getCPX(),
-					it->cell->getCPY(), 0);
-		} else {
-			it->data->aCenterData[beta_idx] = pfun(it->cell->getCPX(),
-					it->cell->getCPY(), it->cell->getCPZ());
-		}
-	}
+	_set_val(f_idx, pfun);
+}
+
+template<class DIMENSION>
+void Poisson_Eq<DIMENSION>::set_beta(
+		typename Poisson_Eq<DIMENSION>::pfun_f pfun) {
+	_set_val(beta_idx, pfun);
 }
 
 template<class DIMENSION>
