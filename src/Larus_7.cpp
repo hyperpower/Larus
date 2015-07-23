@@ -27,15 +27,15 @@
 #include "../test/test_solver.h"
 #include "../test/test_taylor2.h"
 #include "../test/test_poisson.h"
-#include "../test/test_python.h"
+//#include "../test/test_python.h"
 //#include "../test/test_opencl.h"
-#include "../test/test_ts_heap.h"
-#include "OpenCL/cl_utility.h"
+//#include "../test/test_ts_heap.h"
+//#include "OpenCL/cl_utility.h"
 
 
 using namespace std;
 using namespace Larus;
-using namespace LarusTS;
+//using namespace LarusTS;
 
 int main() {
 	//processMain();
