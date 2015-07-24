@@ -17,8 +17,7 @@
 #include "Exp.h"
 #include "Boundary.h"
 
-namespace Larus
-{
+namespace Larus {
 
 //This file use to solve advection equation
 //
@@ -31,8 +30,7 @@ namespace Larus
 //     dt         dx           dy          dz
 
 template<class DIMENSION>
-class Advection_Eq: public ObjectBase
-{
+class Advection_Eq: public ObjectBase {
 public:
 	typedef typename DIMENSION::value_type vt;
 	typedef typename DIMENSION::size_type st;
@@ -64,24 +62,19 @@ public:
 
 	// set --------------------------------------
 	void _set_val(st, pfun_f);
-	void set_phi(pfun_f pfun)
-	{
+	void set_phi(pfun_f pfun) {
 		_set_val(phi_idx, pfun);
 	}
-	void set_dt(pfun_f pfun)
-	{
+	void set_dt(pfun_f pfun) {
 		_set_val(dt_idx, pfun);
 	}
-	void set_u(pfun_f pfun)
-	{
+	void set_u(pfun_f pfun) {
 		_set_val(u_idx, pfun);
 	}
-	void set_v(pfun_f pfun)
-	{
+	void set_v(pfun_f pfun) {
 		_set_val(v_idx, pfun);
 	}
-	void set_w(pfun_f pfun)
-	{
+	void set_w(pfun_f pfun) {
 		ASSERT(DIMENSION::DIM == 3);
 		_set_val(w_idx, pfun);
 	}
@@ -96,14 +89,12 @@ template<class DIMENSION>
 Advection_Eq<DIMENSION>::Advection_Eq(Forest_* pf, BCManager<DIMENSION>* pBCM,
 		st phii, st ti, st ui, st vi, st wi) :
 		pforest(pf), pBCM(pBCM), phi_idx(phii), dt_idx(ti), u_idx(ui), v_idx(
-				vi), w_idx(wi)
-{
+				vi), w_idx(wi) {
 	t = 0; //initial time to 0.0
 }
 
 template<class DIMENSION>
-void Advection_Eq<DIMENSION>::_set_val(st idx, pfun_f pfun)
-{
+void Advection_Eq<DIMENSION>::_set_val(st idx, pfun_f pfun) {
 	for (typename Forest_::iterator it = pforest->begin(); it != pforest->end();
 			++it) {
 		if (DIMENSION::DIM == 2) {
@@ -116,8 +107,7 @@ void Advection_Eq<DIMENSION>::_set_val(st idx, pfun_f pfun)
 	}
 }
 template<class DIMENSION>
-int Advection_Eq<DIMENSION>::_face_exp_adv(pNode pn)
-{
+int Advection_Eq<DIMENSION>::_face_exp_adv(pNode pn) {
 	typedef Pair<Face*, Expression*> Pair;
 	typedef ListT<Pair> List;
 	if (DIMENSION::DIM == 2) {
@@ -171,8 +161,7 @@ int Advection_Eq<DIMENSION>::_face_exp_adv(pNode pn)
 }
 
 template<class DIMENSION>
-int Advection_Eq<DIMENSION>::_face_scheme_adv(pFace pface, Expression& exp)
-{
+int Advection_Eq<DIMENSION>::_face_scheme_adv(pFace pface, Expression& exp) {
 	//face type
 	switch (pface->face_type) {
 	case SPFT_Error:
@@ -198,23 +187,35 @@ int Advection_Eq<DIMENSION>::_face_scheme_adv(pFace pface, Expression& exp)
 // This function calculate the phi value on face
 template<class DIMENSION>
 int Advection_Eq<DIMENSION>::_face_scheme_equal_adv(pFace pface,
-		Expression& exp)
-{
+		Expression& exp) {
 	// face direction in 4,5,6,7
 	//                  4         5         6         7
-	CSAxis arr_dd[] =
-	{ CSAxis_X, CSAxis_Y, CSAxis_X, CSAxis_Y, CSAxis_Z, CSAxis_Z };
-	int arr_signd[] =
-	{ -1, 1, 1, -1, 1, -1 };
-	int arr_veo_idx[] =
-	{ u_idx, v_idx, u_idx, v_idx, w_idx, w_idx };
+	CSAxis arr_dd[] = { CSAxis_X, CSAxis_Y, CSAxis_X, CSAxis_Y, CSAxis_Z,
+			CSAxis_Z };
+	int arr_signd[] = { -1, 1, 1, -1, 1, -1 };
+	int arr_veo_idx[] = { u_idx, v_idx, u_idx, v_idx, w_idx, w_idx };
 
 	CSAxis dd = arr_dd[int(pface->direction) - 4];
 	st veo_idx = arr_veo_idx[int(pface->direction) - 4];
 	Float veo_f = interpolate_1order_on_face((*pface), veo_idx);
-	//get U C D
+	//get U C D ------------------------------
+	pNode pU=NULL_PTR;
+	pNode pC=NULL_PTR;
+	pNode pD=NULL_PTR;
+	if(isPlus(pface->direction)){
+		if(veo_f>0){
+			pC = pface->node;
+			pD = pface->neighbor;
+		}else{
 
+		}
+	}else{
+		if(veo_f>0){
 
+		}else{
+
+		}
+	}
 }
 
 //k-scheme ======================================

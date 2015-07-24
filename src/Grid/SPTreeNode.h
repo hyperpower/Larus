@@ -188,6 +188,35 @@ const SPDirection SP_DIR_OP[26] = //
 				SPD_PMM,    //SPD_MPP = 17 + 7,
 				SPD_MMM,    //SPD_PPP = 17 + 8,
 		};
+const int SP_DIR_MorP[26] =    //
+		{    //
+		        -1,//SPD_MP = 0,
+				-1,//SPD_MM = 1,
+				1,//SPD_PP = 2,
+				-1,//SPD_PM = 3,
+				-1,//SPD_IM = 4,
+				1,//SPD_JP = 5,
+				1,//SPD_IP = 6,
+				-1,//SPD_JM = 7,
+				1,//SPD_KP = 8,
+				-1,//SPD_KM = 9,
+				-1,//SPD_MP = 10 + 0,
+				-1,//SPD_MM = 10 + 1
+				1,//SPD_PP = 10 + 2,
+				-1,//SPD_PM = 10 + 3,
+				-1,//SPD_MP = 14 + 0,
+				-1,//SPD_MM = 14 + 1,
+				1,//SPD_PP = 14 + 2,
+				-1,//SPD_PM = 14 + 3,
+				-1,//SPD_MMM = 17 + 1,
+				-1,//SPD_PMM = 17 + 2,
+				-1,//SPD_MPM = 17 + 3,
+				-1,//SPD_PPM = 17 + 4,
+				-1,//SPD_MMP = 17 + 5,
+				-1,//SPD_PMP = 17 + 6,
+				-1,//SPD_MPP = 17 + 7,
+				1,//SPD_PPP = 17 + 8,
+		};
 
 const SPNodeIdx SP_NODEIDX[8] = { MPM, MMM, PPM, PMM, MPP, MMP, PPP, PMP };
 
@@ -395,7 +424,7 @@ const int SP_DIR_DECOMPOSE[26][4] = { //
 bool isAdjacent(const int &idx_node, const int& idx_boundary);
 bool isAdjacent(SPNodeIdx idx, SPNodeBoundary b);
 inline bool isFaceDirection(const SPDirection& d, const int& dim) {
-	ASSERT(dim==3 || dim==2);
+	ASSERT(dim == 3 || dim == 2);
 	return (dim == 2) ? (d >= 4 && d <= 7) : (d >= 4 && d <= 9);
 }
 
@@ -442,6 +471,14 @@ SPDirection Direction_Compose(const SPDirection&, const SPDirection&); //2D
 
 inline SPDirection oppositeDirection(const SPDirection& d) {
 	return d == ErrSPDirection ? ErrSPDirection : SP_DIR_OP[int(d)];
+}
+inline bool isPlus(const SPDirection& d){
+	ASSERT(d!=ErrSPDirection);
+	return SP_DIR_MorP[int(d)]==1;
+}
+inline bool isMinus(const SPDirection& d){
+	ASSERT(d!=ErrSPDirection);
+	return SP_DIR_MorP[int(d)]==-1;
 }
 //  == to ==
 SPNodeIdx toSPNodeIdx(int i);
@@ -1234,7 +1271,7 @@ SPNodeFaceType getFaceType(  //
 	if (pn == NULL_PTR) {
 		return SPFT_Boundary;
 	}
-	if (pn->getType() == SPT_ghost){
+	if (pn->getType() == SPT_ghost) {
 		return SPFT_Boundary;
 	}
 	if (p->getLevel() > pn->getLevel())
@@ -1354,21 +1391,20 @@ inline pQTNode new_ghost_node(const QTNodeFace& face) {
 	default:
 		ASSERT(false);
 	}
-	pQTNode ghostnode = new QTNode(NULL_PTR, ghost_node_type, face.pnode->getLevel(),
-			face.pnode->getIdx(), c);
+	pQTNode ghostnode = new QTNode(NULL_PTR, ghost_node_type,
+			face.pnode->getLevel(), face.pnode->getIdx(), c);
 	ghostnode->father = face.pnode;
 	ghostnode->data = new QTNode::Data_type((*face.pnode->data));
 	return ghostnode;
 }
 
 inline void delete_ghost_node(QTNodeFace& face) {
-	if(face.pneighbor == NULL_PTR || face.pneighbor->getType() != SPT_ghost){
+	if (face.pneighbor == NULL_PTR || face.pneighbor->getType() != SPT_ghost) {
 		return;
 	}
 	delete face.pneighbor;
 	face.pneighbor = NULL_PTR;
 }
-
 
 //
 template<typename Cell, typename Data, int Dim>
