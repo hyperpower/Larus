@@ -74,11 +74,11 @@ void test_advection_uni() {
 	arrayList_st arridx(6);  //data index
 	arridx.assign_forward(1, 1);
 	arrayList arrval(6);     //data plus
-	arrval[0] = 0;   // phi_idx;
-	arrval[1] = 0;   // phi_idx;
-	arrval[2] = 0.1; // dt_idx;
+	arrval[0] = 0;    // phi_idx;
+	arrval[1] = 0;    // phi_idx;
+	arrval[2] = 0.01; // dt_idx;
 	arrval[3] = 1;   // u_idx;
-	arrval[4] = 0;   // v_idx;
+	arrval[4] = 1;   // v_idx;
 	arrval[5] = 0;   // w_idx;
 	plus_scalar_on_leaf( // 2D Forest
 			forest,      // pQuadTree
@@ -114,7 +114,7 @@ void test_advection_uni() {
 	}
 	bcm.set_bc();
 
-	ae.advance();
+	ae.advance(1000);
 	gnuplot_show(ae);
 	cout << "End of test =========\n";
 }
