@@ -464,6 +464,22 @@ int T_find_neighbor_2( //
 	}
 	return 1;
 }
+
+inline int find_neighbor_2( //
+		pQTNode pc,    //node
+		SPDirection direction, //direction
+		pQTNode& pn,    //one neighbor as output
+		BCManager<Dimension_2D>& bcm) {
+	int flag = T_find_neighbor_2(pc, direction, pn);
+	if (flag == 0) {
+		pn = bcm.find_ghost(getIDX(pc), direction);
+	}
+	if (pn == NULL_PTR) {
+		return 0;
+	}
+	return 1;
+}
+
 template<typename NODE>
 int T_find_neighbor_3ff( //
 		NODE* pc,    //node
@@ -740,10 +756,6 @@ inline void _exp_interplolate_2node( //
 	y1.Insert(ExpTerm2D(int(po->data->aCenterData[Idx_IDX]), po, 1.0));
 	exp = linear_interpolation(x, x1, y1, x2, tmp_exp);
 }
-
-
-
-
 
 }
 

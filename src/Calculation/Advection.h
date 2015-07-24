@@ -29,6 +29,9 @@ namespace Larus {
 //   ------ + u ------- + v -------  + w -------  = 0
 //     dt         dx           dy          dz
 
+
+
+
 template<class DIMENSION>
 class Advection_Eq: public ObjectBase {
 public:
@@ -78,6 +81,12 @@ public:
 		ASSERT(DIMENSION::DIM == 3);
 		_set_val(w_idx, pfun);
 	}
+
+	//--------------------------------
+	int _exp_r(Expression& expU, Expression& expC, Expression& expD, Expression& exp_r){
+		exp_r
+	}
+	//--------------------------------
 
 	int _face_scheme_equal_adv(pFace, Expression&);
 	int _face_scheme_adv(pFace, Expression&);
@@ -199,23 +208,41 @@ int Advection_Eq<DIMENSION>::_face_scheme_equal_adv(pFace pface,
 	st veo_idx = arr_veo_idx[int(pface->direction) - 4];
 	Float veo_f = interpolate_1order_on_face((*pface), veo_idx);
 	//get U C D ------------------------------
-	pNode pU=NULL_PTR;
-	pNode pC=NULL_PTR;
-	pNode pD=NULL_PTR;
-	if(isPlus(pface->direction)){
-		if(veo_f>0){
+	pNode pU = NULL_PTR;
+	pNode pC = NULL_PTR;
+	pNode pD = NULL_PTR;
+	if (isPlus(pface->direction)) {
+		if (veo_f > 0) {
 			pC = pface->node;
 			pD = pface->neighbor;
-		}else{
-
+			find_neighbor_2(pC, oppositeDirection(pface->direction), pU,
+					(*pBCM));
+		} else {
+			pC = pface->neighbor;
+			pD = pface->node;
+			find_neighbor_2(pC, pface->direction, pU, (*pBCM));
 		}
-	}else{
-		if(veo_f>0){
-
-		}else{
-
+	} else {
+		if (veo_f > 0) {
+			pC = pface->neighbor;
+			pD = pface->node;
+			find_neighbor_2(pC, pface->direction, pU, (*pBCM));
+		} else {
+			pC = pface->node;
+			pD = pface->neighbor;
+			find_neighbor_2(pC, oppositeDirection(pface->direction), pU,
+					(*pBCM));
 		}
 	}
+	// Analyze pU
+	Expression expU;
+	if (pU != NULL_PTR) {
+		expU.Insert(ExpTerm(getIDX(pU), pU, 1.0));
+	}
+	//
+	Expression expC(ExpTerm(getIDX(pC), pC, 1.0));
+	Expression expD(ExpTerm(getIDX(pD), pD, 1.0));
+
 }
 
 //k-scheme ======================================
