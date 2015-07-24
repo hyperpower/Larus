@@ -19,11 +19,13 @@
 #include "../Grid/Cell.h"
 #include "../Grid/Forest.h"
 #include "../Calculation/Exp.h"
+#include "../Calculation/Poisson.h"
+#include "../Calculation/Advection.h"
+
 
 #include "Gnuplot.h"
 
-namespace Larus
-{
+namespace Larus {
 
 using namespace std;
 //==========tmp function
@@ -59,8 +61,7 @@ int readfile_gnuplot_countline(string filename);
 
 #ifdef MATRIXSPARCOORD_H_
 template<class VALUE>
-void gnuplot_show(const MatrixSCO<VALUE>& m)
-{
+void gnuplot_show(const MatrixSCO<VALUE>& m) {
 	Gnuplot gp("boxes");
 	arrayList axc(m.NumNonzeros());
 	arrayList ayc(m.NumNonzeros());
@@ -94,14 +95,12 @@ void gnuplot_show(const MatrixSCO<VALUE>& m)
 }
 #endif
 template<class VALUE>
-void gnuplot_show(const arrayListV<VALUE>& arr)
-{
+void gnuplot_show(const arrayListV<VALUE>& arr) {
 	Gnuplot gp("lines");
 	gp.plot_x(arr, "");
 }
 template<class VALUE>
-void gnuplot_show(const ListT<VALUE>& list)
-{
+void gnuplot_show(const ListT<VALUE>& list) {
 	if (list.size() == 0) {
 		return;
 	}
@@ -116,8 +115,7 @@ void gnuplot_show(const ListT<VALUE>& list)
 	gp.plot_x(arr, "");
 }
 template<class VALUE>
-void gnuplot_show_ylog(const ListT<VALUE>& list)
-{
+void gnuplot_show_ylog(const ListT<VALUE>& list) {
 	if (list.size() == 0) {
 		return;
 	}
@@ -133,8 +131,7 @@ void gnuplot_show_ylog(const ListT<VALUE>& list)
 	gp.plot_x(arr, "");
 }
 template<class VALUE>
-void gnuplot_show(const MatrixSCR<VALUE>& m)
-{
+void gnuplot_show(const MatrixSCR<VALUE>& m) {
 	Gnuplot gp("boxes");
 	arrayList axc(m.NumNonzeros());
 	arrayList ayc(m.NumNonzeros());
@@ -171,8 +168,7 @@ void gnuplot_show(const MatrixSCR<VALUE>& m)
 }
 
 //gnuplot show cell -----------------------------
-inline void gnuplot_inline_data(Gnuplot& gp, const Cell2D& cell)
-{
+inline void gnuplot_inline_data(Gnuplot& gp, const Cell2D& cell) {
 	std::ostringstream ss;
 	ss << cell.get(CSAxis_X, eCPL_M) << " " << cell.get(CSAxis_Y, eCPL_M)
 			<< "\n";
@@ -186,8 +182,7 @@ inline void gnuplot_inline_data(Gnuplot& gp, const Cell2D& cell)
 			<< "\n";
 	gp.cmd(ss.str());
 }
-inline void gnuplot_show(const Forest2D& forest)
-{
+inline void gnuplot_show(const Forest2D& forest) {
 	Gnuplot gp("lines");
 	std::ostringstream ss;
 	ss << "plot \"-\" using 1:2 title \"\" " << "with lines lw 1";
@@ -202,16 +197,15 @@ inline void gnuplot_show(const Forest2D& forest)
 	gp.cmd("e");
 }
 
-inline void gnuplot_show(const Exp2D& exp)
-{
+inline void gnuplot_show(const Exp2D& exp) {
 	Gnuplot gp("lines");
 	for (typename Exp2D::const_iterator it = exp.begin(); it != exp.end();
 			++it) {
 		Point2D cp = it->pnode->cell->getCenterPoint();
 		std::ostringstream ss;
 		ss << "\"" << " ( " << it->pnode->data->aCenterData[Idx_IDX] << ", "
-				<< parseQTNodeType(it->pnode->getType()) << " )\" at first " << cp.x
-				<< ", first " << cp.y << " center";
+				<< parseQTNodeType(it->pnode->getType()) << " )\" at first "
+				<< cp.x << ", first " << cp.y << " center";
 		gp.set_label(ss.str());
 
 	}
@@ -229,6 +223,94 @@ inline void gnuplot_show(const Exp2D& exp)
 	}
 	gp.cmd("e");
 }
+
+#ifdef _POISSON_H_
+inline void gnuplot_show(const Poisson_Eq<Dimension_2D>& pe) {
+	typedef typename Dimension_2D::CellData::value_type vt;
+	typedef typename Poisson_Eq<Dimension_2D>::Forest_ Forest;
+	ListT<vt> lxc, lyc, lxm, lxp, lym, lyp, lval;
+	for (typename Forest::const_iterator iter = pe.pforest->begin();
+			iter != pe.pforest->end(); iter++) {
+		const typename Forest::Node* pnode = iter.get_pointer();
+		lxc.push_back(pnode->cell->getCenterPoint().x);
+		lyc.push_back(pnode->cell->getCenterPoint().y);
+		lxm.push_back(pnode->cell->getMM().x);
+		lxp.push_back(pnode->cell->getPP().x);
+		lym.push_back(pnode->cell->getMM().y);
+		lyp.push_back(pnode->cell->getPP().y);
+		lval.push_back(pnode->data->aCenterData[pe.phi_idx]);
+	}
+	typename ListT<vt>::const_iterator iter = lval.begin();
+	vt max = (*iter);
+	vt min = (*iter);
+	for (++iter; iter != lval.end(); ++iter) {
+		if ((*iter) > max) {
+			max = (*iter);
+		}
+		if ((*iter) < min) {
+			min = (*iter);
+		}
+	}
+	Gnuplot gp("boxes");
+	string cmdstr = "with boxxy title \"\" fs solid palette";
+	gp.set_palette_blue_red();
+	if (max == min) {
+		gp.set_cbrange(-1, 1);
+	} else {
+		gp.set_cbrange(min, max);
+	}
+
+	std::ostringstream ss;
+	gp.set_xlabel(ss.str());
+	gp.set_equal_ratio();
+	gp.plot_7(lxc, lyc, lxm, lxp, lym, lyp, lval, cmdstr);
+}
+#endif
+
+#ifdef _ADVECTION_H_
+inline void gnuplot_show(const Advection_Eq<Dimension_2D>& pe) {
+	typedef typename Dimension_2D::CellData::value_type vt;
+	typedef typename Poisson_Eq<Dimension_2D>::Forest_ Forest;
+	ListT<vt> lxc, lyc, lxm, lxp, lym, lyp, lval;
+	for (typename Forest::const_iterator iter = pe.pforest->begin();
+			iter != pe.pforest->end(); iter++) {
+		const typename Forest::Node* pnode = iter.get_pointer();
+		lxc.push_back(pnode->cell->getCenterPoint().x);
+		lyc.push_back(pnode->cell->getCenterPoint().y);
+		lxm.push_back(pnode->cell->getMM().x);
+		lxp.push_back(pnode->cell->getPP().x);
+		lym.push_back(pnode->cell->getMM().y);
+		lyp.push_back(pnode->cell->getPP().y);
+		lval.push_back(pnode->data->aCenterData[pe.phi_idx]);
+	}
+	typename ListT<vt>::const_iterator iter = lval.begin();
+	vt max = (*iter);
+	vt min = (*iter);
+	for (++iter; iter != lval.end(); ++iter) {
+		if ((*iter) > max) {
+			max = (*iter);
+		}
+		if ((*iter) < min) {
+			min = (*iter);
+		}
+	}
+	Gnuplot gp("boxes");
+	string cmdstr = "with boxxy title \"\" fs solid palette";
+	gp.set_palette_blue_red();
+	if (max == min) {
+		gp.set_cbrange(-1, 1);
+	} else {
+		gp.set_cbrange(min, max);
+	}
+
+	std::ostringstream ss;
+	gp.set_xlabel(ss.str());
+	gp.set_equal_ratio();
+	gp.plot_7(lxc, lyc, lxm, lxp, lym, lyp, lval, cmdstr);
+}
+#endif
+
+
 //-----------------------------------------------
 
 }//end namespace

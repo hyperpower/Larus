@@ -5,8 +5,8 @@
  *      Author: zhou
  */
 
-#ifndef CALCULATION_POISSON_H_
-#define CALCULATION_POISSON_H_
+#ifndef _POISSON_H_
+#define _POISSON_H_
 
 #include "../TypeDef.h"
 #include "CalDef.h"
@@ -17,7 +17,7 @@
 #include "../Algebra/Expression.h"
 
 #include "../Algebra/MatrixSparCompRow.h"
-
+#include "../Algebra/Solver_matrix.h"
 namespace Larus {
 //This file use to solve poisson equation
 //
@@ -556,7 +556,7 @@ void Poisson_Eq<DIMENSION>::show() const {
 		}
 	}
 	Gnuplot gp("boxes");
-	string cmdstr = "with boxxy title \"\" fs solid palette";
+	std::string cmdstr = "with boxxy title \"\" fs solid palette";
 	gp.set_palette_blue_red();
 	if (max == min) {
 		gp.set_cbrange(-1, 1);

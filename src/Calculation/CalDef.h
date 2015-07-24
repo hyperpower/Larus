@@ -25,7 +25,15 @@ const LarusDef::size_type V_IDX   = 3;
 template<class NODE>
 inline int getIDX(NODE* pn){
 	ASSERT(pn!=NULL_PTR);
+	ASSERT(pn->data!=NULL_PTR);
 	return int(pn->data->aCenterData[Idx_IDX]);
+}
+// get center data on array
+template<class NODE>
+inline Float getcVal(const NODE* pn, const LarusDef::size_type idx){
+	ASSERT(pn!=NULL_PTR);
+	ASSERT(pn->data!=NULL_PTR);
+	return pn->data->aCenterData[idx];
 }
 
 

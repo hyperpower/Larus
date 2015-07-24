@@ -303,6 +303,16 @@ public:
 		}
 		return res;
 	}
+	//special function work SPNode
+	Float cal_val(size_type idx) {
+		Float res = 0;
+		for (const_iterator iter = this->begin(); iter != this->end(); iter++) {
+			if (iter->val != 0.0) {
+				res += getcVal(iter->pnode, idx) * iter->val;
+			}
+		}
+		return res;
+	}
 
 	void show() const {
 		for (const_iterator iter = this->begin(); iter != this->end(); iter++) {

@@ -36,13 +36,13 @@ typedef Float (*pFun)(Float, Float, Float);
 
 void initial_adaptation_eq( //
 		Forest2D& forest,      // Forest 2D
-		pFun pf,               // A Point2D
+		pFun pf,               //
 		Float value,           // Threshold value
 		int minlevel,          // minlevel
 		int maxlevel);         // maxlevel
 void initial_adaptation_le( //
 		Forest2D& forest,      // Forest 2D
-		pFun pf,               // A Point2D
+		pFun pf,               //
 		Float value,           // Threshold value
 		int minlevel,          // minlevel
 		int maxlevel) ;         // maxlevel

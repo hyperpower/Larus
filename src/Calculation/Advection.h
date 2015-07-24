@@ -29,8 +29,22 @@ namespace Larus {
 //   ------ + u ------- + v -------  + w -------  = 0
 //     dt         dx           dy          dz
 
+typedef Float (*pfun_limiter)(Float);
 
+// First order up wind
+inline Float FOU(Float r) {
+	return 0;
+}
+inline Float limiter_minmod(Float r){
 
+}
+
+const pfun_limiter LIMITER_LIST[] = { FOU,  //0
+		limiter_minmod };
+
+inline Float limiter(Float r, int i) {
+	return LIMITER_LIST[i](r);
+}
 
 template<class DIMENSION>
 class Advection_Eq: public ObjectBase {
@@ -56,12 +70,13 @@ public:
 	Float t;
 
 	st phi_idx;
+	st phin_idx;
 	st dt_idx;
 	st u_idx;
 	st v_idx;
 	st w_idx;
 
-	Advection_Eq(Forest_*, BCManager<DIMENSION>*, st, st, st, st, st = 0);
+	Advection_Eq(Forest_*, BCManager<DIMENSION>*, st, st, st, st, st, st = 0);
 
 	// set --------------------------------------
 	void _set_val(st, pfun_f);
@@ -82,23 +97,23 @@ public:
 		_set_val(w_idx, pfun);
 	}
 
-	//--------------------------------
-	int _exp_r(Expression& expU, Expression& expC, Expression& expD, Expression& exp_r){
-		exp_r
-	}
-	//--------------------------------
-
+	int _face_scheme_boundary_adv(pFace, Expression&);
 	int _face_scheme_equal_adv(pFace, Expression&);
 	int _face_scheme_adv(pFace, Expression&);
 	int _face_exp_adv(pNode);
+
+	int _node_exp_adv(pNode, Expression&);
+
+	int _clear_utp_data(pNode);
+	int advance(int step = 1);
 
 };
 
 template<class DIMENSION>
 Advection_Eq<DIMENSION>::Advection_Eq(Forest_* pf, BCManager<DIMENSION>* pBCM,
-		st phii, st ti, st ui, st vi, st wi) :
-		pforest(pf), pBCM(pBCM), phi_idx(phii), dt_idx(ti), u_idx(ui), v_idx(
-				vi), w_idx(wi) {
+		st phii, st phini, st ti, st ui, st vi, st wi) :
+		pforest(pf), pBCM(pBCM), phi_idx(phii), phin_idx(phini), dt_idx(ti), u_idx(
+				ui), v_idx(vi), w_idx(wi) {
 	t = 0; //initial time to 0.0
 }
 
@@ -176,7 +191,7 @@ int Advection_Eq<DIMENSION>::_face_scheme_adv(pFace pface, Expression& exp) {
 	case SPFT_Error:
 		break;
 	case SPFT_Boundary:
-		std::cout << "Boundary function unfinish\n";
+		this->_face_scheme_boundary_adv(pface, exp);
 		break;
 	case SPFT_Equal: {
 		this->_face_scheme_equal_adv(pface, exp);
@@ -213,36 +228,219 @@ int Advection_Eq<DIMENSION>::_face_scheme_equal_adv(pFace pface,
 	pNode pD = NULL_PTR;
 	if (isPlus(pface->direction)) {
 		if (veo_f > 0) {
-			pC = pface->node;
-			pD = pface->neighbor;
+			pC = pface->pnode;
+			pD = pface->pneighbor;
 			find_neighbor_2(pC, oppositeDirection(pface->direction), pU,
 					(*pBCM));
 		} else {
-			pC = pface->neighbor;
-			pD = pface->node;
+			pC = pface->pneighbor;
+			pD = pface->pnode;
 			find_neighbor_2(pC, pface->direction, pU, (*pBCM));
 		}
 	} else {
 		if (veo_f > 0) {
-			pC = pface->neighbor;
-			pD = pface->node;
+			pC = pface->pneighbor;
+			pD = pface->pnode;
 			find_neighbor_2(pC, pface->direction, pU, (*pBCM));
 		} else {
-			pC = pface->node;
-			pD = pface->neighbor;
+			pC = pface->pnode;
+			pD = pface->pneighbor;
 			find_neighbor_2(pC, oppositeDirection(pface->direction), pU,
 					(*pBCM));
 		}
 	}
+	//
+	Expression expC;
+	expC.Insert(ExpTerm(getIDX(pC), pC, 1.0));
+	Expression expD;
+	expD.Insert(ExpTerm(getIDX(pD), pD, 1.0));
 	// Analyze pU
 	Expression expU;
 	if (pU != NULL_PTR) {
 		expU.Insert(ExpTerm(getIDX(pU), pU, 1.0));
+	} else {
+		exp = expC;  //degenerate to first order up wind
+		return 1;
+	}
+	// cal limiter
+	Float vU = expU.cal_val(phi_idx);
+	Float vC = getcVal(pC, phi_idx);
+	Float vD = getcVal(pD, phi_idx);
+	// cal \Psi(r)
+	Float r = (vD - vC) / (vC - vU + SMALL);
+	Float psi = limiter(r, 0);
+
+	exp = expC;
+	expD.minus(expC); //         (D - C)
+	expD.times(psi);  //     psi*(D - C)
+	exp.plus(expD);   // C + psi*(D - C)
+
+}
+template<class DIMENSION>
+int Advection_Eq<DIMENSION>::_face_scheme_boundary_adv(pFace pface,
+		Expression& exp) {
+	// face direction in 4,5,6,7
+	//                  4         5         6         7
+	CSAxis arr_dd[] = { CSAxis_X, CSAxis_Y, CSAxis_X, CSAxis_Y, CSAxis_Z,
+			CSAxis_Z };
+	int arr_signd[] = { -1, 1, 1, -1, 1, -1 };
+	int arr_veo_idx[] = { u_idx, v_idx, u_idx, v_idx, w_idx, w_idx };
+
+	CSAxis dd = arr_dd[int(pface->direction) - 4];
+	st veo_idx = arr_veo_idx[int(pface->direction) - 4];
+	Float veo_f = interpolate_1order_on_face((*pface), veo_idx);
+	//get U C D ------------------------------
+	pNode pU = NULL_PTR;
+	pNode pC = NULL_PTR;
+	pNode pD = NULL_PTR;
+	if (isPlus(pface->direction)) {
+		if (veo_f > 0) {
+			pC = pface->pnode;  //o
+			pD = pface->pneighbor;
+			find_neighbor_2(pC, oppositeDirection(pface->direction), pU,
+					(*pBCM));
+		} else {
+			pC = pface->pneighbor;
+			pD = pface->pnode;
+		}
+	} else {
+		if (veo_f > 0) {
+			pC = pface->pneighbor;
+			pD = pface->pnode;
+		} else {
+			pC = pface->pnode;
+			pD = pface->pneighbor;
+			find_neighbor_2(pC, oppositeDirection(pface->direction), pU,
+					(*pBCM));
+		}
 	}
 	//
-	Expression expC(ExpTerm(getIDX(pC), pC, 1.0));
-	Expression expD(ExpTerm(getIDX(pD), pD, 1.0));
+	Expression expC;
+	expC.Insert(ExpTerm(getIDX(pC), pC, 1.0));
+	Expression expD;
+	expD.Insert(ExpTerm(getIDX(pD), pD, 1.0));
+	// Analyze pU
+	Expression expU;
+	if (pU != NULL_PTR) {
+		expU.Insert(ExpTerm(getIDX(pU), pU, 1.0));  // revise
+	} else {
+		exp = expC;  //degenerate to first order up wind
+		return 1;
+	}
+	// cal limiter
+	Float vU = expU.cal_val(phi_idx);
+	Float vC = getcVal(pC, phi_idx);
+	Float vD = getcVal(pD, phi_idx);
+	// cal \Psi(r)
+	Float r = (vD - vC) / (vC - vU + SMALL);
+	Float psi = limiter(r, 0);
 
+	exp = expC;
+	expD.minus(expC); //         (D - C)
+	expD.times(psi);  //     psi*(D - C)
+	exp.plus(expD);   // C + psi*(D - C)
+
+}
+template<class DIMENSION>
+int Advection_Eq<DIMENSION>::_node_exp_adv(pNode pn, Expression& exp) {
+	typedef typename Forest_::Node Node;
+	typedef typename Forest_::Face Face;
+	typedef Pair<Face*, Expression*> Pair;
+	typedef ListT<Pair> List;
+
+	if (DIMENSION::DIM == 2) {
+		CSAxis arr_dp[] = { CSAxis_Y, CSAxis_X, CSAxis_Y, CSAxis_X };
+		//
+		assert(pn->data->utp_data !=NULL_PTR);
+		List& lpexp = (*CAST(List*, pn->data->utp_data));
+		Expression FF[4];
+		for (typename List::iterator iter = lpexp.begin(); iter != lpexp.end();
+				++iter) {
+			assert(iter->first->pnode == pn); //
+			Face* iterf = iter->first;
+			Expression* itere = iter->second;
+			CSAxis dp = arr_dp[int(iterf->direction) - 4];
+			Float a_f;
+			if (iterf->face_type == SPFT_Equal
+					|| iterf->face_type == SPFT_Boundary
+					|| iterf->face_type == SPFT_FineCoarse) {
+				a_f = pn->cell->getD(dp);
+			} else if (iterf->face_type == SPFT_CoarseFine) {
+				a_f = iterf->pneighbor->cell->getD(dp);
+			}
+			itere->times(a_f);
+			FF[int(iterf->direction) - 4].plus(*itere);
+		}
+		// x direction
+		Expression exp_x = FF[2] - FF[0];
+		Float dt = getcVal(pn, dt_idx);
+		Float l = pn->cell->getD(CSAxis_X);
+		Float u = getcVal(pn, u_idx);
+		Float CFL_x = u * dt / l;
+		ASSERT_MSG(CFL_x < 1, " CFL x > 1");
+		exp_x.times(-CFL_x);  //negative
+		// y direction
+		Expression exp_y = FF[1] - FF[3];
+		l = pn->cell->getD(CSAxis_Y);
+		u = getcVal(pn, v_idx);
+		Float CFL_y = u * dt / l;
+		ASSERT_MSG(CFL_y < 1, " CFL y > 1");
+		exp_y.times(-CFL_y); //negative
+		//
+		exp.plus(exp_x);
+		exp.plus(exp_y);
+		_clear_utp_data(pn);
+	}
+	return 1;
+}
+
+template<class DIMENSION>
+int Advection_Eq<DIMENSION>::advance(int step) {
+	typedef typename Forest_::pNode pNode;
+	for (int i = 0; i < step; i++) {
+		//1 Traverse face
+		for (typename Forest_::iterator it = pforest->begin();
+				it != pforest->end(); ++it) {
+			_face_exp_adv(it.get_pointer());
+		}
+		//2 add time
+		for (typename Forest_::iterator it = pforest->begin();
+				it != pforest->end(); ++it) {
+
+			pNode pn = it.get_pointer();
+			Expression exp;
+			_node_exp_adv(it.get_pointer(), exp);
+			exp.Insert(ExpTerm(getIDX(pn), pn, 1.0));
+
+			pn->data->aCenterData[phin_idx] = exp.cal_val(phi_idx);
+		}
+		//3 refresh phi
+		for (typename Forest_::iterator it = pforest->begin();
+				it != pforest->end(); ++it) {
+			pNode pn = it.get_pointer();
+			pn->data->aCenterData[phi_idx] = pn->data->aCenterData[phin_idx];
+		}
+	}
+}
+template<class DIMENSION>
+int Advection_Eq<DIMENSION>::_clear_utp_data(pNode pn) {
+	if (pn->data->utp_data != NULL_PTR) {
+		typedef typename Forest_::Node Node;
+		typedef typename Forest_::Face Face;
+		typedef Pair<Face*, Expression*> Pair;
+		typedef ListT<Pair> List;
+
+		List& lpexp = (*CAST(List*, pn->data->utp_data));
+		for (typename List::iterator iter = lpexp.begin(); iter != lpexp.end();
+				++iter) {
+			delete iter->first;
+			delete iter->second;
+		}
+		delete &lpexp;
+		pn->data->utp_data = NULL_PTR;
+		return 1;
+	}
+	return 0;
 }
 
 //k-scheme ======================================
