@@ -183,7 +183,7 @@ void BCManager<DIMENSION>::new_ghost_nodes() {
 			gid.direction = iterf->direction;
 			pNode pn = new_ghost_node((*iterf));
 			//change the index id ------------------------
-			pn->data->aCenterData[Idx_IDX] = -gid.node_idx; //negative
+			pn->data->aCenterData[Idx_IDX] = -gid.node_idx -1; //negative
 			ghostmap.insert(GhostNode(gid, pn));
 		}
 	}

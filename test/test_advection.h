@@ -76,7 +76,7 @@ void test_advection_uni() {
 	arrayList arrval(6);     //data plus
 	arrval[0] = 0;    // phi_idx;
 	arrval[1] = 0;    // phi_idx;
-	arrval[2] = 0.01; // dt_idx;
+	arrval[2] = 0.005; // dt_idx;
 	arrval[3] = 1;   // u_idx;
 	arrval[4] = 1;   // v_idx;
 	arrval[5] = 0;   // w_idx;
@@ -114,7 +114,7 @@ void test_advection_uni() {
 	}
 	bcm.set_bc();
 
-	ae.advance(1000);
+	ae.advance(100);
 	gnuplot_show(ae);
 	cout << "End of test =========\n";
 }
