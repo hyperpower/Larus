@@ -75,13 +75,16 @@ template<class TYPE>
 inline TYPE max(TYPE a, TYPE b) {
 	return (a >= b) ? a : b;
 }
-
 template<class TYPE>
-inline int max(TYPE a, TYPE b, TYPE c, TYPE d) {
+inline TYPE max(TYPE a, TYPE b, TYPE c) {
+	return max(max(a, b), c);
+}
+template<class TYPE>
+inline TYPE max(TYPE a, TYPE b, TYPE c, TYPE d) {
 	return max(max(a, b), max(c, d));
 }
 template<class TYPE>
-inline int max(TYPE a, TYPE b, TYPE c, TYPE d,TYPE a2, TYPE b2, TYPE c2, TYPE d2) {
+inline TYPE max(TYPE a, TYPE b, TYPE c, TYPE d,TYPE a2, TYPE b2, TYPE c2, TYPE d2) {
 	return max(max(a, b,c, d), max(a2,b2,c2,d2));
 }
 template<class TYPE>

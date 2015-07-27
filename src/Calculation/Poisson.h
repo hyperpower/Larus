@@ -24,8 +24,6 @@ namespace Larus {
 //   ▽•(bata(x,y)  ▽phi(x,y)  ) = f(x,y)     2D --version
 //   ▽•(bata(x,y,z)▽phi(x,y,z)) = f(x,y,z)   3D --version
 
-
-
 template<class DIMENSION>
 class Poisson_Eq: public ObjectBase {
 public:
@@ -57,6 +55,7 @@ public:
 	void set_f(pfun_f pfun);
 	void set_beta(pfun_f pfun);
 	//
+	int _substitute_boudary_val(Expression& exp, st idx);
 	int _node_exp(typename Forest_::pNode pn, Expression& exp);
 	int _face_scheme_gradient(typename Forest_::pFace pface, Expression& exp);
 	int _face_scheme_equal_gradient(typename Forest_::pFace pface,
@@ -78,7 +77,6 @@ public:
 	void show() const;
 };
 
-
 template<class DIMENSION>
 int Poisson_Eq<DIMENSION>::_f_term(typename Forest_::pNode pn,
 		Expression& exp) {
@@ -89,8 +87,7 @@ int Poisson_Eq<DIMENSION>::_f_term(typename Forest_::pNode pn,
 }
 
 template<class DIMENSION>
-void Poisson_Eq<DIMENSION>::_set_val(st idx, pfun_f pfun)
-{
+void Poisson_Eq<DIMENSION>::_set_val(st idx, pfun_f pfun) {
 	for (typename Forest_::iterator it = pforest->begin(); it != pforest->end();
 			++it) {
 		if (DIMENSION::DIM == 2) {
@@ -104,8 +101,7 @@ void Poisson_Eq<DIMENSION>::_set_val(st idx, pfun_f pfun)
 }
 
 template<class DIMENSION>
-void Poisson_Eq<DIMENSION>::set_f(
-		typename Poisson_Eq<DIMENSION>::pfun_f pfun) {
+void Poisson_Eq<DIMENSION>::set_f(typename Poisson_Eq<DIMENSION>::pfun_f pfun) {
 	_set_val(f_idx, pfun);
 }
 
@@ -250,7 +246,19 @@ int Poisson_Eq<DIMENSION>::_face_scheme_fine_coarse_gradient_f(
 	exp.plus(expnei);
 	return 1;
 }
-
+template<class DIMENSION>
+int Poisson_Eq<DIMENSION>::_substitute_boudary_val(Expression& exp, st idx) {
+	for (typename Expression::iterator iter = exp.begin(); iter != exp.end();
+			++iter) {
+		if (iter->idx < 0 && iter->idx != ExpTerm::IDX_CONST) {
+			vt v = iter->val * getcVal(iter->pnode, idx);
+			ExpTerm ct(ExpTerm::IDX_CONST, NULL_PTR, v);
+			exp.Insert(ct);
+			iter->val = 0.0;
+		}
+	}
+	exp.trim_zero();
+}
 template<class DIMENSION>
 int Poisson_Eq<DIMENSION>::_face_scheme_fine_coarse_gradient_bf(
 		typename Forest_::pFace pface, Expression& exp) {
@@ -286,7 +294,7 @@ int Poisson_Eq<DIMENSION>::_face_scheme_fine_coarse_gradient_bf(
 			(*pBCM));
 	//
 	Float x = pc->getPoint(pface->direction)[dd];
-	Float x1 = pc->cell->get(dd,eCPL_C);
+	Float x1 = pc->cell->get(dd, eCPL_C);
 	Exp2D y1;
 	y1.Insert(ExpTerm2D(getIDX(pc), pc, 1.0));
 	Float x2 = point_b[dd];
@@ -294,16 +302,7 @@ int Poisson_Eq<DIMENSION>::_face_scheme_fine_coarse_gradient_bf(
 	exp = second_order_gradient(x, x1, y1, x2, exp_b, x3, exp_f);
 
 	// substitute boundary phi
-	for (typename Expression::iterator iter = exp.begin();
-			iter != exp.end(); ++iter) {
-		if (iter->idx < 0 && iter->idx != ExpTerm::IDX_CONST) {
-			vt v = iter->val * iter->pnode->data->aCenterData[phi_idx];
-			ExpTerm ct(ExpTerm::IDX_CONST, NULL_PTR, v);
-			exp.Insert(ct);
-			iter->val = 0.0;
-		}
-	}
-	exp.trim_zero();
+	_substitute_boudary_val(exp, phi_idx);
 
 	Float beta_f = interpolate_1order_on_face((*pface), beta_idx);
 
@@ -527,7 +526,6 @@ Poisson_Eq<DIMENSION>::Poisson_Eq(Forest_* pf, BCManager<DIMENSION>* pbcm, st b,
 		st p, st f) :
 		pforest(pf), pBCM(pbcm), beta_idx(b), phi_idx(p), f_idx(f) {
 }
-
 
 template<class DIMENSION>
 void Poisson_Eq<DIMENSION>::show() const {

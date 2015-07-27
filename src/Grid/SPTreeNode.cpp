@@ -329,15 +329,12 @@ std::string parseQTNodeType(int type)
 	int flag = 0;
 	if (hasType(type, SPT_ghost)) {
 		return " ghost ";
-		flag = 1;
 	}
 	if (hasType(type, SPT_normal)) {
 		return " normal ";
-		flag = 1;
 	}
 	if (hasType(type, SPT_cut)) {
 		return " cut ";
-		flag = 1;
 	}
 	if (flag == 0) {
 		return " Error input node type";

@@ -572,8 +572,8 @@ public:
 			const std::string &str);  //
 	template<typename ARR>
 	Gnuplot& plot_2(        //
-			const ARR& ,  //
-			const ARR& ,  //
+			const ARR&,  //
+			const ARR&,  //
 			const std::string &);  //
 
 	/// plot x,y pairs with dy errorbars: x y dy
@@ -905,23 +905,19 @@ Gnuplot& Gnuplot::plot_2( //
 	// inline data
 	std::ostringstream sst;
 	//
-	sst << "plot \"-\" using 1:2:" << str;
+	sst << "plot \"-\" using 1:2 " << str;
 	cmd(sst.str());
 	sst.str("");
 	typename ARR::const_iterator iter[2];
 	iter[0] = col1.begin();
 	iter[1] = col2.begin();
 	for (; iter[0] != col1.end();) {
-		for (int i = 0; i < 2; ++i) {
-			sst << (*iter[i]) << " ";
-		}
-		sst << "\n";
-		cmd(sst.str());
-		sst.str("");
+		sst << (*iter[0]) << " " <<(*iter[1])<<"\n" ;
 		for (int i = 0; i < 2; ++i) {
 			++iter[i];
 		}
 	}
+	cmd(sst.str());
 	cmd("e\n");
 	return *this;
 }
@@ -1029,7 +1025,6 @@ void stringtok(Container &container, std::string const &in,
 		// set up for next loop
 		i = j + 1;
 	}
-
 	return;
 }
 

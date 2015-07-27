@@ -409,6 +409,16 @@ Gnuplot& Gnuplot::set_zrange_reverse(const double iFrom, const double iTo) {
 //
 // set the palette range
 //
+Gnuplot& Gnuplot::set(const std::string& str) {
+	std::ostringstream cmdstr;
+
+	cmdstr << "set " << str;
+	cmd(cmdstr.str());
+
+	return *this;
+}
+
+
 Gnuplot& Gnuplot::set_cbrange(const double iFrom, const double iTo) {
 	std::ostringstream cmdstr;
 

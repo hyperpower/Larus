@@ -21,7 +21,7 @@
 #include "../Calculation/Exp.h"
 #include "../Calculation/Poisson.h"
 #include "../Calculation/Advection.h"
-
+#include "../Calculation/Scalar.h"
 
 #include "Gnuplot.h"
 
@@ -224,21 +224,19 @@ inline void gnuplot_show(const Exp2D& exp) {
 	gp.cmd("e");
 }
 
-#ifdef _POISSON_H_
-inline void gnuplot_show(const Poisson_Eq<Dimension_2D>& pe) {
-	typedef typename Dimension_2D::CellData::value_type vt;
-	typedef typename Poisson_Eq<Dimension_2D>::Forest_ Forest;
+inline void gnuplot_show_as_contour(const Forest2D& forest, int cv_idx) {
+	typedef Forest2D::Data::value_type vt;
 	ListT<vt> lxc, lyc, lxm, lxp, lym, lyp, lval;
-	for (typename Forest::const_iterator iter = pe.pforest->begin();
-			iter != pe.pforest->end(); iter++) {
-		const typename Forest::Node* pnode = iter.get_pointer();
+	for (typename Forest2D::const_iterator iter = forest.begin();
+			iter != forest.end(); iter++) {
+		const typename Forest2D::Node* pnode = iter.get_pointer();
 		lxc.push_back(pnode->cell->getCenterPoint().x);
 		lyc.push_back(pnode->cell->getCenterPoint().y);
 		lxm.push_back(pnode->cell->getMM().x);
 		lxp.push_back(pnode->cell->getPP().x);
 		lym.push_back(pnode->cell->getMM().y);
 		lyp.push_back(pnode->cell->getPP().y);
-		lval.push_back(pnode->data->aCenterData[pe.phi_idx]);
+		lval.push_back(pnode->data->aCenterData[cv_idx]);
 	}
 	typename ListT<vt>::const_iterator iter = lval.begin();
 	vt max = (*iter);
@@ -259,57 +257,66 @@ inline void gnuplot_show(const Poisson_Eq<Dimension_2D>& pe) {
 	} else {
 		gp.set_cbrange(min, max);
 	}
-
+	gp.set("format cb \"%+-.2e\"");
 	std::ostringstream ss;
 	gp.set_xlabel(ss.str());
 	gp.set_equal_ratio();
 	gp.plot_7(lxc, lyc, lxm, lxp, lym, lyp, lval, cmdstr);
+}
+
+inline void gnuplot_show_as_surface(Forest2D& forest, int cv_idx) {
+	typedef Forest2D::Data::value_type vt;
+	typedef Forest2D::Cell Cell;
+	typedef Forest2D::Node Node;
+	Gnuplot gp("lines");
+	std::ostringstream ss;
+	ss << "splot \"-\" using 1:2:3 title \"\" " << "with lines lw 1 lc palette";
+	gp.set_palette_blue_red();
+	// x rot , z rot , 1 scale, 1 zscale
+	gp.set("view 40,10, 1.1, 1");
+	gp.set("ticslevel 0");
+	gp.set("colorbox");
+	gp.set_equal_ratio();
+	gp.cmd(ss.str());
+	ss.str("");
+	for (typename Forest2D::iterator it = forest.begin();
+			it != forest.end(); ++it) {
+		Node* pn = it.get_pointer();
+		arrayList aval(4), ares(1);
+		arrayList_st aidx(1);
+		aidx[0] = cv_idx;
+		const SPDirection index_dir[4] = { SPD_MM, SPD_PM, SPD_PP, SPD_MP };
+		//  0       1       2       3
+		arrayListT<Point2D> aloc(4);
+		for (int i = 0; i < 4; ++i) {
+			//get value on vertex =====================
+			interpolate_1order_on_vertex_averange_neighbor(pn, index_dir[i],
+					aidx, ares);
+			aval[i] = ares[0];
+			aloc[i] = pn->getPoint(index_dir[i]); //get point location
+		}
+		std::ostringstream ss;
+		for (int i = 0; i < 4; ++i) {
+			ss << aloc[i].x << " " << aloc[i].y << " "<< aval[i]<< "\n";
+		}
+		ss << aloc[0].x << " " << aloc[0].y << " "<< aval[0]<< "\n";
+		gp.cmd(ss.str());
+		gp.cmd("\n");
+	}
+	gp.cmd("e");
+}
+
+#ifdef _POISSON_H_
+inline void gnuplot_show_as_contour(const Poisson_Eq<Dimension_2D>& pe) {
+	gnuplot_show_as_contour((*pe.pforest), pe.phi_idx);
 }
 #endif
 
 #ifdef _ADVECTION_H_
-inline void gnuplot_show(const Advection_Eq<Dimension_2D>& pe) {
-	typedef typename Dimension_2D::CellData::value_type vt;
-	typedef typename Poisson_Eq<Dimension_2D>::Forest_ Forest;
-	ListT<vt> lxc, lyc, lxm, lxp, lym, lyp, lval;
-	for (typename Forest::const_iterator iter = pe.pforest->begin();
-			iter != pe.pforest->end(); iter++) {
-		const typename Forest::Node* pnode = iter.get_pointer();
-		lxc.push_back(pnode->cell->getCenterPoint().x);
-		lyc.push_back(pnode->cell->getCenterPoint().y);
-		lxm.push_back(pnode->cell->getMM().x);
-		lxp.push_back(pnode->cell->getPP().x);
-		lym.push_back(pnode->cell->getMM().y);
-		lyp.push_back(pnode->cell->getPP().y);
-		lval.push_back(pnode->data->aCenterData[pe.phi_idx]);
-	}
-	typename ListT<vt>::const_iterator iter = lval.begin();
-	vt max = (*iter);
-	vt min = (*iter);
-	for (++iter; iter != lval.end(); ++iter) {
-		if ((*iter) > max) {
-			max = (*iter);
-		}
-		if ((*iter) < min) {
-			min = (*iter);
-		}
-	}
-	Gnuplot gp("boxes");
-	string cmdstr = "with boxxy title \"\" fs solid palette";
-	gp.set_palette_blue_red();
-	if (max == min) {
-		gp.set_cbrange(-1, 1);
-	} else {
-		gp.set_cbrange(min, max);
-	}
-
-	std::ostringstream ss;
-	gp.set_xlabel(ss.str());
-	gp.set_equal_ratio();
-	gp.plot_7(lxc, lyc, lxm, lxp, lym, lyp, lval, cmdstr);
+inline void gnuplot_show_as_contour(const Advection_Eq<Dimension_2D>& ae) {
+	gnuplot_show_as_contour((*ae.pforest), ae.phi_idx);
 }
 #endif
-
 
 //-----------------------------------------------
 

@@ -14,6 +14,8 @@
 #include "../Grid/SPTreeNode.h"
 #include "../Grid/Forest.h"
 #include "../Algebra/Arithmetic.h"
+#include "../Algebra/MatrixSparCompRow.h"
+#include "../Algebra/Solver_matrix.h"
 #include "Exp.h"
 #include "Boundary.h"
 
@@ -36,11 +38,20 @@ inline Float FOU(Float r) {
 	return 0;
 }
 inline Float limiter_minmod(Float r) {
-	return 1;  // unfinish
+	return max(0.0, min(1.0, r));  // unfinish
+}
+inline Float limiter_superbee(Float r) {
+	return max(0.0, min(2.0 * r, 1.0), min(r, 2.0));
+}
+inline Float limiter_vanLeer(Float r) {
+	return (r + ABS(r)) / (1 + r);
 }
 
-const pfun_limiter LIMITER_LIST[] = { FOU,  //0
-		limiter_minmod };
+const pfun_limiter LIMITER_LIST[] = {  //
+		FOU,  //0
+				limiter_minmod,  //
+				limiter_superbee, //
+				limiter_vanLeer };
 
 inline Float limiter(Float r, int i) {
 	return LIMITER_LIST[i](r);
@@ -68,7 +79,7 @@ public:
 	BCManager<DIMENSION>* pBCM;
 
 	Float t;
-
+	st scheme_idx;
 	st phi_idx;
 	st phin_idx;
 	st dt_idx;
@@ -97,16 +108,23 @@ public:
 		_set_val(w_idx, pfun);
 	}
 
+	int _substitute_boudary_val(Expression& exp, st idx);
+
 	int _face_scheme_boundary_adv(pFace, Expression&);
 	int _face_scheme_equal_adv(pFace, Expression&);
 	int _face_scheme_adv(pFace, Expression&);
 	int _face_exp_adv(pNode);
 
+	int _node_exp_adv_t(pNode, Expression&);
+	int _node_exp_adv_t(pNode, Expression&, CSAxis);
 	int _node_exp_adv(pNode, Expression&);
 
 	int _clear_utp_data(pNode);
 	int advance(int step = 1);
+	int advance_space_split(int step = 1);
 
+	int _bulid_matrix(MatrixSCR<Float>& mat, arrayListV<Float>& b);
+	int slove(Float tol);
 };
 
 template<class DIMENSION>
@@ -115,6 +133,7 @@ Advection_Eq<DIMENSION>::Advection_Eq(Forest_* pf, BCManager<DIMENSION>* pBCM,
 		pforest(pf), pBCM(pBCM), phi_idx(phii), phin_idx(phini), dt_idx(ti), u_idx(
 				ui), v_idx(vi), w_idx(wi) {
 	t = 0; //initial time to 0.0
+	scheme_idx = 2;
 }
 
 template<class DIMENSION>
@@ -266,12 +285,12 @@ int Advection_Eq<DIMENSION>::_face_scheme_equal_adv(pFace pface,
 	Float vC = getcVal(pC, phi_idx);
 	Float vD = getcVal(pD, phi_idx);
 	// cal \Psi(r)
-	Float r = (vD - vC) / (vC - vU + SMALL);
-	Float psi = limiter(r, 0);
+	Float r = (vC - vU) / (vD - vC + SMALL);
+	Float psi = limiter(r, scheme_idx);
 
 	exp = expC;
 	expD.minus(expC); //         (D - C)
-	expD.times(psi);  //     psi*(D - C)
+	expD.times(0.5 * psi);  //     psi*(D - C)
 	exp.plus(expD);   // C + psi*(D - C)
 	return 1;
 }
@@ -331,17 +350,17 @@ int Advection_Eq<DIMENSION>::_face_scheme_boundary_adv(pFace pface,
 	Float vC = getcVal(pC, phi_idx);
 	Float vD = getcVal(pD, phi_idx);
 	// cal \Psi(r)
-	Float r = (vD - vC) / (vC - vU + SMALL);
-	Float psi = limiter(r, 0);
+	Float r = (vC - vU) / (vD - vC + SMALL);
+	Float psi = limiter(r, scheme_idx);
 
 	exp = expC;
 	expD.minus(expC); //         (D - C)
-	expD.times(psi);  //     psi*(D - C)
+	expD.times(0.5 * psi);  //     psi*(D - C)
 	exp.plus(expD);   // C + psi*(D - C)
 	return 1;
 }
 template<class DIMENSION>
-int Advection_Eq<DIMENSION>::_node_exp_adv(pNode pn, Expression& exp) {
+int Advection_Eq<DIMENSION>::_node_exp_adv_t(pNode pn, Expression& exp) {
 	typedef typename Forest_::Node Node;
 	typedef typename Forest_::Face Face;
 	typedef Pair<Face*, Expression*> Pair;
@@ -392,6 +411,107 @@ int Advection_Eq<DIMENSION>::_node_exp_adv(pNode pn, Expression& exp) {
 }
 
 template<class DIMENSION>
+int Advection_Eq<DIMENSION>::_node_exp_adv_t(pNode pn, Expression& exp,
+		CSAxis aix) {
+	typedef typename Forest_::Node Node;
+	typedef typename Forest_::Face Face;
+	typedef Pair<Face*, Expression*> Pair;
+	typedef ListT<Pair> List;
+
+	if (DIMENSION::DIM == 2) {
+		assert(pn->data->utp_data !=NULL_PTR);
+		List& lpexp = (*CAST(List*, pn->data->utp_data));
+		Expression FP;
+		Expression FM;
+		SPDirection dirp =
+				(aix == CSAxis_X) ?
+						SPD_IP : ((aix == CSAxis_Y) ? SPD_JP : SPD_KP);
+		SPDirection dirm = oppositeDirection(dirp);
+		int countFP = 0;
+		int countFM = 0;
+		for (typename List::iterator iter = lpexp.begin(); iter != lpexp.end();
+				++iter) {
+			assert(iter->first->pnode == pn); //
+			Face* iterf = iter->first;
+			Expression* itere = iter->second;
+			if (iterf->direction == dirp) {
+				FP.plus(*itere);
+				countFP++;
+			}
+			if (iterf->direction == dirm) {
+				FM.plus(*itere);
+				countFM++;
+			}
+		}
+		if (countFP > 1) {
+			FP.times(1.0 / Float(countFP)); // get average face gradient;
+		}
+		if (countFM > 1) {
+			FM.times(1.0 / Float(countFM)); // get average face gradient;
+		}
+
+		// direction
+		exp = FP - FM;
+		Float dt = getcVal(pn, dt_idx);
+		Float l = pn->cell->getD(CSAxis_X);
+		Float u = getcVal(pn, u_idx);
+		Float CFL_x = u * dt / l;
+		ASSERT_MSG(CFL_x < 0.5, " CFL x > 0.5");
+		exp.times(-CFL_x);  //negative
+	}
+	return 1;
+}
+
+template<class DIMENSION>
+int Advection_Eq<DIMENSION>::_node_exp_adv(pNode pn, Expression& exp) {
+	typedef typename Forest_::Node Node;
+	typedef typename Forest_::Face Face;
+	typedef Pair<Face*, Expression*> Pair;
+	typedef ListT<Pair> List;
+
+	if (DIMENSION::DIM == 2) {
+		assert(pn->data->utp_data !=NULL_PTR);
+		List& lpexp = (*CAST(List*, pn->data->utp_data));
+		Expression FF[4];
+		int countFF[] = { 0, 0, 0, 0 };
+		for (typename List::iterator iter = lpexp.begin(); iter != lpexp.end();
+				++iter) {
+			assert(iter->first->pnode == pn); //
+			Face* iterf = iter->first;
+			Expression* itere = iter->second;
+			int idd = int(iterf->direction) - 4;
+			FF[idd].plus(*itere);
+			countFF[idd]++;
+		}
+		for (int i = 0; i < 4; i++) {
+			if (countFF[i] > 1) {
+				FF[i].times(1.0 / Float(countFF[i])); // get average face gradient;
+			}
+		}
+		// x direction
+		Expression exp_x = FF[2] - FF[0];
+		Float l = pn->cell->getD(CSAxis_X);
+		Float u = getcVal(pn, u_idx);
+		Float CFL_x = u / l;
+		//ASSERT_MSG(CFL_x < 0.5, " CFL x > 0.5");
+		exp_x.times(-CFL_x);  //negative
+		// y direction
+		Expression exp_y = FF[1] - FF[3];
+		l = pn->cell->getD(CSAxis_Y);
+		u = getcVal(pn, v_idx);
+		Float CFL_y = u / l;
+		//ASSERT_MSG(CFL_y < 0.5, " CFL y > 0.5");
+		exp_y.times(-CFL_y); //negative
+		//
+		exp.plus(exp_x);
+		exp.plus(exp_y);
+
+		_clear_utp_data(pn);
+	}
+	return 1;
+}
+
+template<class DIMENSION>
 int Advection_Eq<DIMENSION>::advance(int step) {
 	typedef typename Forest_::pNode pNode;
 	for (int i = 0; i < step; i++) {
@@ -405,9 +525,8 @@ int Advection_Eq<DIMENSION>::advance(int step) {
 				it != pforest->end(); ++it) {
 			pNode pn = it.get_pointer();
 			Expression exp;
-			_node_exp_adv(it.get_pointer(), exp);
+			_node_exp_adv_t(it.get_pointer(), exp);
 			exp.Insert(ExpTerm(getIDX(pn), pn, 1.0));
-			//exp.show();
 			pn->data->aCenterData[phin_idx] = exp.cal_val(phi_idx);
 			//std::cout<< " old "<< pn->data->aCenterData[phi_idx];
 			//std::cout<< " new "<< pn->data->aCenterData[phin_idx]<<"\n";
@@ -418,6 +537,188 @@ int Advection_Eq<DIMENSION>::advance(int step) {
 			pNode pn = it.get_pointer();
 			pn->data->aCenterData[phi_idx] = pn->data->aCenterData[phin_idx];
 		}
+	}
+	return 0;
+}
+
+template<class DIMENSION>
+int Advection_Eq<DIMENSION>::advance_space_split(int step) {
+	typedef typename Forest_::pNode pNode;
+	for (int i = 0; i < step; i++) {
+		//1 Traverse face
+		for (typename Forest_::iterator it = pforest->begin();
+				it != pforest->end(); ++it) {
+			_face_exp_adv(it.get_pointer());
+		}
+		//2 add time
+		for (typename Forest_::iterator it = pforest->begin();
+				it != pforest->end(); ++it) {
+			pNode pn = it.get_pointer();
+			Expression exp;
+			_node_exp_adv_t(it.get_pointer(), exp, CSAxis_X);
+			exp.Insert(ExpTerm(getIDX(pn), pn, 1.0));
+			pn->data->aCenterData[phin_idx] = exp.cal_val(phi_idx);
+		}
+		//3 refresh phi
+		for (typename Forest_::iterator it = pforest->begin();
+				it != pforest->end(); ++it) {
+			pNode pn = it.get_pointer();
+			pn->data->aCenterData[phi_idx] = pn->data->aCenterData[phin_idx];
+		}
+		for (typename Forest_::iterator it = pforest->begin();
+				it != pforest->end(); ++it) {
+			pNode pn = it.get_pointer();
+			Expression exp;
+			_node_exp_adv_t(it.get_pointer(), exp, CSAxis_Y);
+			exp.Insert(ExpTerm(getIDX(pn), pn, 1.0));
+			pn->data->aCenterData[phin_idx] = exp.cal_val(phi_idx);
+		}
+		//3 refresh phi
+		for (typename Forest_::iterator it = pforest->begin();
+				it != pforest->end(); ++it) {
+			pNode pn = it.get_pointer();
+			pn->data->aCenterData[phi_idx] = pn->data->aCenterData[phin_idx];
+		}
+		if (DIMENSION::DIM == 3) {
+			for (typename Forest_::iterator it = pforest->begin();
+					it != pforest->end(); ++it) {
+				pNode pn = it.get_pointer();
+				Expression exp;
+				_node_exp_adv_t(it.get_pointer(), exp, CSAxis_Z);
+				exp.Insert(ExpTerm(getIDX(pn), pn, 1.0));
+				pn->data->aCenterData[phin_idx] = exp.cal_val(phi_idx);
+			}
+			//3 refresh phi
+			for (typename Forest_::iterator it = pforest->begin();
+					it != pforest->end(); ++it) {
+				pNode pn = it.get_pointer();
+				pn->data->aCenterData[phi_idx] =
+						pn->data->aCenterData[phin_idx];
+			}
+		}
+
+	}
+	return 0;
+}
+
+template<class DIMENSION>
+int Advection_Eq<DIMENSION>::_substitute_boudary_val(Expression& exp, st idx) {
+	for (typename Expression::iterator iter = exp.begin(); iter != exp.end();
+			++iter) {
+		if (iter->idx < 0 && iter->idx != ExpTerm::IDX_CONST) {
+			vt v = iter->val * getcVal(iter->pnode, idx);
+			ExpTerm ct(ExpTerm::IDX_CONST, NULL_PTR, v);
+			exp.Insert(ct);
+			iter->val = 0.0;
+		}
+	}
+	exp.trim_zero();
+}
+template<class DIMENSION>
+int Advection_Eq<DIMENSION>::_bulid_matrix(MatrixSCR<Float>& mat,
+		arrayListV<Float>& b) {
+	typedef typename Forest_::pNode pNode;
+
+	//1 Traverse face
+	for (typename Forest_::iterator it = pforest->begin(); it != pforest->end();
+			++it) {
+		_face_exp_adv(it.get_pointer());
+	}
+	ListT<st> l_rowptr;
+	l_rowptr.push_back(0);
+	ListT<st> l_colid;
+	ListT<Float> l_val;
+	ListT<Float> l_b;
+	int countnz = 0;
+	//2 build matrix
+	for (typename Forest_::iterator it = pforest->begin(); it != pforest->end();
+			++it) {
+		pNode pn = it.get_pointer();
+		Expression exp;
+		_node_exp_adv(pn, exp);
+		//if (getIDX(pn) < 10) {
+		//	std::cout << "node id " << getIDX(pn) << std::endl;
+		//	exp.show();
+		//}
+		_substitute_boudary_val(exp, phi_idx);
+		int fconst = 0;
+		for (typename Expression::iterator ite = exp.begin(); ite != exp.end();
+				++ite) {
+			if (ite->idx != ite->IDX_CONST) {
+				l_colid.push_back(ite->idx);
+				l_val.push_back(ite->val);
+				countnz++;
+			} else {
+				fconst = 1;
+				l_b.push_back(-ite->val);    //!!!!! negative added here
+			}
+		}
+		if (fconst == 0) {
+			l_b.push_back(0);
+		}
+		l_rowptr.push_back(countnz);
+	}
+	//copy list to array  ======================
+	st nr = l_rowptr.size() - 1;
+	st nz = l_val.size();
+	ASSERT(nz == l_colid.size());
+	ASSERT(nr <= nz);
+	mat.newsize(nr, nr, nz);
+	b.reconstruct(l_b.size());
+	int i = 0;
+	for (typename ListT<st>::iterator it = l_colid.begin(); it != l_colid.end();
+			++it) {
+		mat.col_ind(i) = (*it);
+		i++;
+	}
+	i = 0;
+	for (typename ListT<st>::iterator it = l_rowptr.begin();
+			it != l_rowptr.end(); ++it) {
+		mat.row_ptr(i) = (*it);
+		i++;
+	}
+	i = 0;
+	for (typename ListT<Float>::iterator it = l_val.begin(); it != l_val.end();
+			++it) {
+		mat.val(i) = (*it);
+		i++;
+	}
+	i = 0;
+	for (typename ListT<Float>::iterator it = l_b.begin(); it != l_b.end();
+			++it) {
+		b[i] = (*it);
+		i++;
+	}
+	return 1;
+}
+
+template<class DIMENSION>
+int Advection_Eq<DIMENSION>::slove(Float tol) {
+	int max_iter_out = 1;
+	for (int iter_out = 0; iter_out < max_iter_out; iter_out++) {
+		MatrixSCR<Float> mat;
+		arrayListV<Float> b;
+		this->_bulid_matrix(mat, b);
+		arrayListV<Float> x(b.size());
+		//gnuplot_show(mat);
+		//set up ========
+		int max_iter = 2000;
+		ListT<Float> lr;	//list residual
+		//solver =======================
+		int sf = Jacobi(mat, x, b, max_iter, tol, lr);
+		if (sf != 0 && sf != 1) {
+			std::cerr << " >! solver failed \n";
+			return -1;
+		}
+		//put the value back
+		for (typename Forest_::iterator iter = pforest->begin();
+				iter != pforest->end(); ++iter) {
+			iter->data->aCenterData[phi_idx] =
+					x[iter->data->aCenterData[Idx_IDX]];
+		}
+		//if(sf == 0 && iter_out > 50){
+		//	return 1; //success
+		//}
 	}
 	return 0;
 }

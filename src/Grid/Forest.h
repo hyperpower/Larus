@@ -1232,6 +1232,10 @@ public:
 	pointer get_pointer() {
 		return _ptr;
 	}
+
+	const pointer get_pointer() const{
+		return _ptr;
+	}
 };
 
 //SPFace iterator ===============================
