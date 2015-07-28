@@ -467,6 +467,37 @@ void getListpNode_leaf_center_data_in_range( //
 	}
 }
 
+template<typename NODE>
+void visit_getListpNode_leaf_on_line(NODE* node, utPointer pt) {
+	if (condition_is_leaf(node)) {
+		arrayListT<utPointer> arr = (*CAST(arrayListT<utPointer>*, pt));
+		Float& loc = *(CAST(Float*, arr[1]));
+		CSAxis& axi = *(CAST(CSAxis*, arr[2]));
+		if (isInRange(node->cell->get(axi, eCPL_M), loc,
+				node->cell->get(axi, eCPL_P), Range_co)) {
+			ListT<NODE*>* list = CAST(ListT<NODE*>*, arr[0]);
+			list->push_back(node);
+		}
+	}
+}
+
+void getListpNode_leaf_on_line( // 2D Forest
+		ListT<pQTNode>& listnode,           //as output
+		Forest2D& forest,                  // Forest
+		Float loc, CSAxis axi) {
+	arrayListT<utPointer> a(3);
+	a[0] = &listnode;
+	a[1] = &loc;
+	a[2] = &axi;
+	for (LarusDef::size_type i = 0; i < forest.iLen(); ++i) {
+		for (LarusDef::size_type j = 0; j < forest.jLen(); ++j) {
+			if (forest.get_attribution(i, j) == ATT_ENABLE)
+				forest.getpTree(i, j)->Traversal(
+						visit_getListpNode_leaf_on_line, &a);
+		}
+	}
+}
+
 void getListpNode_leaf_center_data_in_range( // 2D Forest
 		ListT<pQTNode>& listnode, //as output
 		Forest2D& forest, // Forest

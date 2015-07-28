@@ -49,7 +49,7 @@ int main() {
 	//test_gauss_e();
 	//cl::work_flow_control();
 	//test_sp1();
-	test_advection_uni();
+	test_advection_uni4(1);
 	cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
 	return 0;
 }

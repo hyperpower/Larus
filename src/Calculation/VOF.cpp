@@ -82,12 +82,12 @@ Float forward_problem_3D(Float m1, Float m2, Float m3, Float a, Float c1,
 	} else if (m1 <= a && a < m2) { //case 2
 		V = (a * a * c1 - a * m1 * c1 * c1) / (2 * m2 * m3)
 				+ (m1 * m1 * c1 * c1 * c1) / (6 * m2 * m3);
-	} else if (m2 <= a && a < min(m12, m3 * c3)) { //case 3
+	} else if (m2 <= a && a < MIN(m12, m3 * c3)) { //case 3
 		V = (a * a * (3 * m1 * c1 + 3 * m2 * c2 - a)
 				+ m1 * m1 * (m1 * c1 * c1 * c1 - 3 * a * c1 * c1)
 				+ m2 * m2 * (m2 * c2 * c2 * c2 - 3 * a * c2 * c2))
 				/ (6 * m1 * m2 * m3);
-	} else if (min(m12, m3 * c3) <= a && a < 0.5 * max_a) {
+	} else if (MIN(m12, m3 * c3) <= a && a < 0.5 * max_a) {
 		if (m3 * c3 < m12) {  //case 4
 			V = (a * a * (3 * m12 + 3 * m3 * c3 - 2 * a)
 					+ m1 * m1 * (m1 * c1 * c1 * c1 - 3 * a * c1 * c1)
@@ -105,7 +105,7 @@ Float inverse_problem_3D(Float m1, Float m2, Float m3, Float V, Float c1,
 		Float c2, Float c3) {
 	Float a = 0;
 	Float mc12 = m1 * c1 + m2 * c2;
-	Float V1 = m1 * m1 * c1 * c1 * c1 / (max(6.0 * m2 * m3, SMALL));
+	Float V1 = m1 * m1 * c1 * c1 * c1 / (MAX(6.0 * m2 * m3, SMALL));
 	Float V2 = V1 + (m2 * c1 - m1 * c1 * c1) / (2.0 * m3);
 	Float V31 = (m3 * m3 * (3 * m1 * c1 + 3 * m2 * c2 - m3)
 			+ m1 * m1 * (m1 * c1 * c1 * c1 - 3 * m3 * c1 * c1)
@@ -122,7 +122,7 @@ Float inverse_problem_3D(Float m1, Float m2, Float m3, Float V, Float c1,
 						8.0 * m2 * m3 * c1 * V
 								- m1 * m1 * c1 * c1 * c1 * c1 / 3.0)) / 2.0
 				* c1;
-	} else if (V2 <= V && V < min(V31, V32)) { //case 3
+	} else if (V2 <= V && V < MIN(V31, V32)) { //case 3
 		Float ta = -1;
 		Float tb = 3.0 * mc12;
 		Float tc = -3.0 * (m1 * m1 * c1 * c1 + m2 * m2 * c2 * c2);
@@ -131,8 +131,8 @@ Float inverse_problem_3D(Float m1, Float m2, Float m3, Float V, Float c1,
 		Float res0 = 0;
 		Float res2 = 0;
 		solve_cubic_equation(ta, tb, tc, td, res0, a, res2);
-	} else if (min(V31, V32) <= V && V < 0.5 * max_v) {
-		if (V31 == min(V31, V32)) {  //case 4
+	} else if (MIN(V31, V32) <= V && V < 0.5 * max_v) {
+		if (V31 == MIN(V31, V32)) {  //case 4
 			Float ta = -2.0;
 			Float tb = 3.0 * (mc12 + m3 * c3);
 			Float tc =
@@ -169,14 +169,14 @@ int middle_problem_3D(ListT<Point3D>& list, Float m1, Float m2, Float m3,
 		list.push_back(Point3D(c1, (a - m1 * c1) / m2, 0)); //Q
 		list.push_back(Point3D(0, a / m2, 0));              //J
 		V = 2;
-	} else if (m2 * c2 <= a && a < min(m12, m3 * c3)) { //case 3  ==>>> 5 points
+	} else if (m2 * c2 <= a && a < MIN(m12, m3 * c3)) { //case 3  ==>>> 5 points
 		list.push_back(Point3D(0, 0, a / m3));              //K
 		list.push_back(Point3D(c1, 0, (a - m1 * c1) / m3)); //P
 		list.push_back(Point3D(c1, (a - m1 * c1) / m2, 0)); //Q
 		list.push_back(Point3D((a - m2 * c2) / m1, c2, 0)); //R
 		list.push_back(Point3D(0, c2, (a - m2 * c2) / m3)); //S
 		V = 3;
-	} else if (min(m12, m3 * c3) <= a && a <= 0.5 * max_a) {
+	} else if (MIN(m12, m3 * c3) <= a && a <= 0.5 * max_a) {
 		if (m3 * c3 < m12) {  //case 4  ==>>> 6 points
 			list.push_back(Point3D((a - m3 * c3) / m1, 0, c3)); //T
 			list.push_back(Point3D(c1, 0, (a - m1 * c1) / m3)); //P

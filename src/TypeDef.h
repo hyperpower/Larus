@@ -72,23 +72,23 @@ const Float SMALL = 1e-15;
 const Float PINF = 1e255;
 
 template<class TYPE>
-inline TYPE max(TYPE a, TYPE b) {
+inline TYPE MAX(TYPE a, TYPE b) {
 	return (a >= b) ? a : b;
 }
 template<class TYPE>
-inline TYPE max(TYPE a, TYPE b, TYPE c) {
-	return max(max(a, b), c);
+inline TYPE MAX(TYPE a, TYPE b, TYPE c) {
+	return MAX(MAX(a, b), c);
 }
 template<class TYPE>
-inline TYPE max(TYPE a, TYPE b, TYPE c, TYPE d) {
-	return max(max(a, b), max(c, d));
+inline TYPE MAX(TYPE a, TYPE b, TYPE c, TYPE d) {
+	return MAX(MAX(a, b), MAX(c, d));
 }
 template<class TYPE>
-inline TYPE max(TYPE a, TYPE b, TYPE c, TYPE d,TYPE a2, TYPE b2, TYPE c2, TYPE d2) {
-	return max(max(a, b,c, d), max(a2,b2,c2,d2));
+inline TYPE MAX(TYPE a, TYPE b, TYPE c, TYPE d,TYPE a2, TYPE b2, TYPE c2, TYPE d2) {
+	return MAX(MAX(a, b,c, d), MAX(a2,b2,c2,d2));
 }
 template<class TYPE>
-inline TYPE min(TYPE a, TYPE b) {
+inline TYPE MIN(TYPE a, TYPE b) {
 	return (a <= b) ? a : b;
 }
 template<class TYPE>

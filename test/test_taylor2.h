@@ -64,7 +64,7 @@ Float get_head_x(const ListT<Segment2D>& sg) {
 	Float res = sg.begin()->PSX();
 	for (ListT<Segment2D>::const_iterator iter = sg.begin(); iter != sg.end();
 			++iter) {
-		Float tmp = max(iter->PSX(), iter->PEX());
+		Float tmp = MAX(iter->PSX(), iter->PEX());
 		if (tmp > res) {
 			res = tmp;
 		}
@@ -77,7 +77,7 @@ Float get_tail_x(const ListT<Segment2D>& sg) {
 	Float res = sg.begin()->PSX();
 	for (ListT<Segment2D>::const_iterator iter = sg.begin(); iter != sg.end();
 			++iter) {
-		Float tmp = min(iter->PSX(), iter->PEX());
+		Float tmp = MIN(iter->PSX(), iter->PEX());
 		if (tmp < res) {
 			res = tmp;
 		}
@@ -93,13 +93,13 @@ Float get_tail_xc(const ListT<Segment2D>& sg) {
 	ListT<Segment2D>::const_iterator iters = sg.begin();
 	for (ListT<Segment2D>::const_iterator iter = sg.begin(); iter != sg.end();
 			++iter) {
-		Float tmpy = min(iter->PSY(), iter->PEY());
-		Float tmpx = min(iter->PSX(), iter->PEX());
-		if (tmpy <= min(iters->PSY(), iters->PEY()) && tmpx < xr) {
+		Float tmpy = MIN(iter->PSY(), iter->PEY());
+		Float tmpx = MIN(iter->PSX(), iter->PEX());
+		if (tmpy <= MIN(iters->PSY(), iters->PEY()) && tmpx < xr) {
 			iters = iter;
 		}
 	}
-	return min(iters->PSX(), iters->PEX());
+	return MIN(iters->PSX(), iters->PEX());
 }
 
 Float get_surface_max_y(const ListT<Segment2D>& sg) {
@@ -107,7 +107,7 @@ Float get_surface_max_y(const ListT<Segment2D>& sg) {
 	Float res = sg.begin()->PSY();
 	for (ListT<Segment2D>::const_iterator iter = sg.begin(); iter != sg.end();
 			++iter) {
-		Float tmp = max(iter->PSY(), iter->PEY());
+		Float tmp = MAX(iter->PSY(), iter->PEY());
 		if (tmp > res) {
 			res = tmp;
 		}
@@ -121,7 +121,7 @@ Segment2D get_surface_max_segment(const ListT<Segment2D>& sg) {
 	Segment2D resseg;
 	for (ListT<Segment2D>::const_iterator iter = sg.begin(); iter != sg.end();
 			++iter) {
-		Float tmp = max(iter->PSY(), iter->PEY());
+		Float tmp = MAX(iter->PSY(), iter->PEY());
 		if (tmp > res) {
 			res = tmp;
 			resseg = (*iter);
@@ -313,7 +313,7 @@ void new_gerris_file(GerrisFileAdp<Dimension_2D>*& gfa, string dir, int group,
 	string strss = dir + filename;
 	Point2D op(-0.25, 0.0);  //intial point
 	int lmin = 5;            //level min
-	int lmax = 8;            //level max
+	int lmax = 8;            //level MAX
 	Float boxl = 0.5;        //box lenght
 	gfa = new GerrisFileAdp<Dimension_2D>(strss, lmin, lmax, op, boxl);
 	gfa->forest.ConnectTrees();
@@ -359,13 +359,13 @@ void basic_sig(Forest2D& f, arrayListT<utPointer>& arg) //0->8
 	ListT<Segment2D>::const_iterator iters = l_surface.begin();
 	for (ListT<Segment2D>::const_iterator iter = l_surface.begin();
 			iter != l_surface.end(); ++iter) {
-		Float tmpy = min(iter->PSY(), iter->PEY());
-		Float tmpx = min(iter->PSX(), iter->PEX());
-		if (tmpy <= min(iters->PSY(), iters->PEY()) && tmpx < xr) {
+		Float tmpy = MIN(iter->PSY(), iter->PEY());
+		Float tmpx = MIN(iter->PSX(), iter->PEX());
+		if (tmpy <= MIN(iters->PSY(), iters->PEY()) && tmpx < xr) {
 			iters = iter;
 		}
 	}
-	tail_xc = min(iters->PSX(), iters->PEX());
+	tail_xc = MIN(iters->PSX(), iters->PEX());
 	//
 	ListT<pQTNode> listpn;
 	getListpNode_leaf_center_data_in_range(listpn, f, Gerris_T, 0.0, 1.0,

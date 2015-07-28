@@ -264,7 +264,7 @@ inline void gnuplot_show_as_contour(const Forest2D& forest, int cv_idx) {
 	gp.plot_7(lxc, lyc, lxm, lxp, lym, lyp, lval, cmdstr);
 }
 
-inline void gnuplot_show_as_surface(Forest2D& forest, int cv_idx) {
+inline void gnuplot_show_as_surface(Forest2D& forest, int cv_idx, string title = "") {
 	typedef Forest2D::Data::value_type vt;
 	typedef Forest2D::Cell Cell;
 	typedef Forest2D::Node Node;
@@ -272,6 +272,7 @@ inline void gnuplot_show_as_surface(Forest2D& forest, int cv_idx) {
 	std::ostringstream ss;
 	ss << "splot \"-\" using 1:2:3 title \"\" " << "with lines lw 1 lc palette";
 	gp.set_palette_blue_red();
+	gp.set_title(title);
 	// x rot , z rot , 1 scale, 1 zscale
 	gp.set("view 40,10, 1.1, 1");
 	gp.set("ticslevel 0");

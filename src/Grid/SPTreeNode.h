@@ -660,11 +660,11 @@ int SPNode<Cell, Data, Dim>::_height(
 		return 0;
 	else if (Dim == 2) {
 		return 1
-				+ max(_height(Current->child[0]), _height(Current->child[1]),
+				+ MAX(_height(Current->child[0]), _height(Current->child[1]),
 						_height(Current->child[2]), _height(Current->child[3]));
 	} else { //Dim==3
 		return 1
-				+ max(_height(Current->child[0]), _height(Current->child[1]),
+				+ MAX(_height(Current->child[0]), _height(Current->child[1]),
 						_height(Current->child[2]), _height(Current->child[3]),
 						_height(Current->child[4]), _height(Current->child[5]),
 						_height(Current->child[6]), _height(Current->child[7]));

@@ -145,8 +145,8 @@ void test_vof() {
 	Point3D p2(x1, x2, x3);
 	Cell3D c(p1, p2);
 	c.draw_to_vtk("cell.vtk");
-	Point3D v1(min(0.0, m1), min(0.0, m2), min(0.0, m3));
-	Point3D v2(max(0.0, m1), max(0.0, m2), max(0.0, m3));
+	Point3D v1(MIN(0.0, m1), MIN(0.0, m2), MIN(0.0, m3));
+	Point3D v2(MAX(0.0, m1), MAX(0.0, m2), MAX(0.0, m3));
 	Cell3D v(v1, v2);
 	v.draw_to_vtk("cellv.vtk");
 

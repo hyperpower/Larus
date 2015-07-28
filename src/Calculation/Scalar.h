@@ -116,6 +116,14 @@ void getListpNode_leaf_center_data_in_range( // 2D Forest
 		Float min, //min value
 		Float max, //max value
 		TYPE_Range range);
+
+
+void getListpNode_leaf_on_line( // 2D Forest
+		ListT<pQTNode>& listnode,           //as output
+		Forest2D& forest,                  // Forest
+		Float loc,
+		CSAxis);
+
 void get_average_value_on_level( // 2D QuadTree
 		pQuadTree tree,          //Forest
 		int level,               //level

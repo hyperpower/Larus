@@ -308,7 +308,11 @@ public:
 		Float res = 0;
 		for (const_iterator iter = this->begin(); iter != this->end(); iter++) {
 			if (iter->val != 0.0) {
-				res += getcVal(iter->pnode, idx) * iter->val;
+				if (iter->isConstNode()) {
+					res += iter->val;
+				} else {
+					res += getcVal(iter->pnode, idx) * iter->val;
+				}
 			}
 		}
 		return res;

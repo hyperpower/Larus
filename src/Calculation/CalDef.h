@@ -28,6 +28,14 @@ inline int getIDX(NODE* pn){
 	ASSERT(pn->data!=NULL_PTR);
 	return int(pn->data->aCenterData[Idx_IDX]);
 }
+inline int getIDX(const Forest2D::iterator& iter){
+	ASSERT(iter->data!=NULL_PTR);
+	return iter->data->aCenterData[Idx_IDX];
+}
+inline int getIDX(const Forest2D::const_iterator& iter){
+	ASSERT(iter->data!=NULL_PTR);
+	return iter->data->aCenterData[Idx_IDX];
+}
 // get center data on array
 template<class NODE>
 inline Float getcVal(const NODE* pn, const LarusDef::size_type idx){
@@ -35,6 +43,18 @@ inline Float getcVal(const NODE* pn, const LarusDef::size_type idx){
 	ASSERT(pn->data!=NULL_PTR);
 	return pn->data->aCenterData[idx];
 }
+
+template<class NODE>
+inline Float& refcVal(const NODE* pn, const LarusDef::size_type idx){
+	ASSERT(pn!=NULL_PTR);
+	ASSERT(pn->data!=NULL_PTR);
+	return pn->data->aCenterData[idx];
+}
+inline Float& refcVal(Forest2D::iterator& iter, const LarusDef::size_type idx){
+	ASSERT(iter->data!=NULL_PTR);
+	return iter->data->aCenterData[idx];
+}
+
 
 
 
