@@ -47,8 +47,8 @@ Float calDiscreteErrorLinf(const arrayList &ao, const arrayList &ap) {
 Float randf(Float &r1, Float &r2) {
 	assert(r1 != r2);
 	Float rnum1 = rand() % 100;
-	Float rmax = max(r1, r2);
-	Float rmin = min(r1, r2);
+	Float rmax = MAX(r1, r2);
+	Float rmin = MIN(r1, r2);
 	return rmin + (rmax - rmin) / 100 * rnum1;
 }
 

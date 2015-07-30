@@ -262,6 +262,7 @@ char * getKernelSource(const std::string& filename)
     if (!file)
     {
         fprintf(stderr, "Error: Could not open kernel source file\n");
+        fprintf(stderr, "%s \n", filename.c_str());
         exit(EXIT_FAILURE);
     }
     fseek(file, 0, SEEK_END);

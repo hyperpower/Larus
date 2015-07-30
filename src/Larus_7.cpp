@@ -28,6 +28,7 @@
 #include "../test/test_taylor2.h"
 #include "../test/test_poisson.h"
 #include "../test/test_advection.h"
+#include "../test/test_opencl.h"
 //#include "../test/test_python.h"
 //#include "../test/test_opencl.h"
 //#include "../test/test_ts_heap.h"
@@ -36,6 +37,7 @@
 
 using namespace std;
 using namespace Larus;
+using namespace cl;
 //using namespace LarusTS;
 
 int main() {
@@ -49,7 +51,7 @@ int main() {
 	//test_gauss_e();
 	//cl::work_flow_control();
 	//test_sp1();
-	test_advection_uni_advance();
+	vector_add();
 	cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
 	return 0;
 }
