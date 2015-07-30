@@ -480,8 +480,7 @@ void test_advection_uni4(int si) {
 		lx.push_back((*iter)->cell->get(CSAxis_X, eCPL_C));
 		lv.push_back(getcVal((*iter), ae.phi_idx));
 	}
-//Gnuplot gp("lines");
-//gp.plot_2(lx, lv, " with lines lw 2");
+
 
 	gnuplot_show_as_surface((*ae.pforest), ae.phi_idx);
 
@@ -524,7 +523,7 @@ void test_advection_uni_advance() {
 	BCManager<Dimension_2D> bcm(&forest);
 	bcm.new_ghost_nodes();
 
-	Advection_Eq<Dimension_2D> ae(&forest, &bcm, 1, 1, 2, 3, 4, 5, 6);
+	Advection_Eq<Dimension_2D> ae(&forest, &bcm, 3, 1, 2, 3, 4, 5, 6);
 	set_scalar_on_leaf_by_function( // 2D Forest
 			forest, //pQuadTree
 			ae.phi_idx, //data index
