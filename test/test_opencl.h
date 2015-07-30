@@ -180,6 +180,20 @@ int vector_add() {
     free(h_b);
     free(h_c);
 
+
+    uint dist = 256; // i.e., get_local_size(0);
+
+    while ( dist > 1 )
+
+    {
+
+    dist >>= 1;
+
+    printf("d : %d \n", dist);
+
+    }
+
+
     return 0;
 }
 
