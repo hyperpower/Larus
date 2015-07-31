@@ -51,7 +51,9 @@ int main() {
 	//test_gauss_e();
 	//cl::work_flow_control();
 	//test_sp1();
-	vector_add();
+	show_opencl_info();
+	vector_dot();
+
 	cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
 	return 0;
 }

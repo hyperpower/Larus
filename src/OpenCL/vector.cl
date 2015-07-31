@@ -1,7 +1,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
-__kernel void vec_add(__global double *A, __global double *B,__global double *C, unsigned int count){                                                                                      
+__kernel void vec_add(__global double *A, 
+  __global double *B,
+  __global double *C,
+   unsigned int count){                                                                                      
    // Get the work-item’s unique ID             
-   int idx = get_global_id(0);                  
+   uint idx = get_global_id(0);                  
                                                 
    // Add the corresponding locations of        
    // 'A' and 'B', and store the result in 'C'. 
@@ -15,7 +18,7 @@ __kernel void vec_times_num(__global const double *num,
                             __global double *vec_res,
                             unsigned int count){                                                                                      
    // Get the work-item’s unique ID             
-   int idx = get_global_id(0);                  
+   uint idx = get_global_id(0);                  
                                                 
    // Add the corresponding locations of        
    // 'A' and 'B', and store the result in 'C'. 
@@ -89,6 +92,53 @@ void dot_persist_kernel(
         r[grp_id] = priv_acc;
     }
 
+}
+
+__kernel
+void dot_mul_kernel(
+      __global const double* x, // input vector
+      __global const double* y, // input vector
+      __global double *r, // result vector
+      int n // input vector size
+){
+    int id = get_global_id(0);
+    if ( id < n ){
+        r[id] = x[id] * y[id]; // multiply elements, store product
+    }
+}
+
+
+// Kernel for part 1 of dot product, version 2, using local reduction.
+__kernel __attribute__((reqd_work_group_size(LOCAL_GROUP_XDIM, 1, 1)))
+void dot_local_reduce_kernel(
+      __global const double * x, // input vector
+      __global const double * y, // input vector
+      __global double * r, // result vector
+      uint n // input vector size
+){
+  uint id     = get_global_id(0);
+  uint lcl_id = get_local_id(0);
+  uint grp_id = get_group_id(0);
+  double priv_acc = 0;                      // accumulator in private memory
+  __local double lcl_acc[LOCAL_GROUP_XDIM]; // accumulators in local memory
+  if ( id < n ){
+      priv_acc = lcl_acc[lcl_id] = x[id] * y[id]; // multiply elements, store product
+  }
+  barrier(CLK_LOCAL_MEM_FENCE); // Find the sum of the accumulators.
+  uint dist = LOCAL_GROUP_XDIM; // i.e., get_local_size(0);
+  while ( dist >= 1 ){
+      dist >>= 1;
+      if ( lcl_id < dist ){
+          // Private memory accumulator avoids extra local memory read.
+          priv_acc += lcl_acc[lcl_id + dist];
+          lcl_acc[lcl_id] = priv_acc;
+      }
+      barrier(CLK_LOCAL_MEM_FENCE);
+  }
+  // Store the result (the sum for the local work group).
+  if ( lcl_id == 0 ){
+      r[grp_id] = priv_acc;
+  }
 }
 
 
