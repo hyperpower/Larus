@@ -168,6 +168,7 @@ void gnuplot_show(const MatrixSCR<VALUE>& m) {
 }
 
 //gnuplot show cell -----------------------------
+// gnuplot work with tree -----------------------
 inline void gnuplot_inline_data(Gnuplot& gp, const Cell2D& cell) {
 	std::ostringstream ss;
 	ss << cell.get(CSAxis_X, eCPL_M) << " " << cell.get(CSAxis_Y, eCPL_M)
@@ -181,6 +182,30 @@ inline void gnuplot_inline_data(Gnuplot& gp, const Cell2D& cell) {
 	ss << cell.get(CSAxis_X, eCPL_M) << " " << cell.get(CSAxis_Y, eCPL_M)
 			<< "\n";
 	gp.cmd(ss.str());
+}
+inline void gnuplot_show(const pQTNode pnode) {
+	Gnuplot gp("lines");
+	std::ostringstream ss;
+	ss << "plot \"-\" using 1:2 title \"\" " << "with lines lw 1";
+	gp.set_equal_ratio();
+	gp.cmd(ss.str());
+	ss.str("");
+	gnuplot_inline_data(gp, *(pnode->cell));
+	gp.cmd("e");
+}
+inline void gnuplot_show(const ListT<pQTNode>& lpnode) {
+	Gnuplot gp("lines");
+	std::ostringstream ss;
+	ss << "plot \"-\" using 1:2 title \"\" " << "with lines lw 1";
+	gp.set_equal_ratio();
+	gp.cmd(ss.str());
+	ss.str("");
+	for (typename ListT<pQTNode>::const_iterator it = lpnode.begin();
+			it != lpnode.end(); ++it) {
+		gnuplot_inline_data(gp, *((*it)->cell));
+		gp.cmd("\n");
+	}
+	gp.cmd("e");
 }
 inline void gnuplot_show(const Forest2D& forest) {
 	Gnuplot gp("lines");
@@ -197,6 +222,7 @@ inline void gnuplot_show(const Forest2D& forest) {
 	gp.cmd("e");
 }
 
+//------------------------------------------------
 inline void gnuplot_show(const Exp2D& exp) {
 	Gnuplot gp("lines");
 	for (typename Exp2D::const_iterator it = exp.begin(); it != exp.end();
@@ -264,7 +290,8 @@ inline void gnuplot_show_as_contour(const Forest2D& forest, int cv_idx) {
 	gp.plot_7(lxc, lyc, lxm, lxp, lym, lyp, lval, cmdstr);
 }
 
-inline void gnuplot_show_as_surface(Forest2D& forest, int cv_idx, string title = "") {
+inline void gnuplot_show_as_surface(Forest2D& forest, int cv_idx, string title =
+		"") {
 	typedef Forest2D::Data::value_type vt;
 	typedef Forest2D::Cell Cell;
 	typedef Forest2D::Node Node;
@@ -280,8 +307,8 @@ inline void gnuplot_show_as_surface(Forest2D& forest, int cv_idx, string title =
 	gp.set_equal_ratio();
 	gp.cmd(ss.str());
 	ss.str("");
-	for (typename Forest2D::iterator it = forest.begin();
-			it != forest.end(); ++it) {
+	for (typename Forest2D::iterator it = forest.begin(); it != forest.end();
+			++it) {
 		Node* pn = it.get_pointer();
 		arrayList aval(4), ares(1);
 		arrayList_st aidx(1);
@@ -298,9 +325,9 @@ inline void gnuplot_show_as_surface(Forest2D& forest, int cv_idx, string title =
 		}
 		std::ostringstream ss;
 		for (int i = 0; i < 4; ++i) {
-			ss << aloc[i].x << " " << aloc[i].y << " "<< aval[i]<< "\n";
+			ss << aloc[i].x << " " << aloc[i].y << " " << aval[i] << "\n";
 		}
-		ss << aloc[0].x << " " << aloc[0].y << " "<< aval[0]<< "\n";
+		ss << aloc[0].x << " " << aloc[0].y << " " << aval[0] << "\n";
 		gp.cmd(ss.str());
 		gp.cmd("\n");
 	}

@@ -666,7 +666,8 @@ void SPTree<NODE, Dim>::Traversal_b(SPTree<NODE, Dim>::pFun_SPTree visit,
 template<class NODE, LarusDef::size_type Dim>
 void SPTree<NODE, Dim>::Conditional_Traversal(
 		SPTree<NODE, Dim>::pFun_SPTree_condition t_condition,
-		SPTree<NODE, Dim>::pFun_SPTree visit, utPointer p) {
+		SPTree<NODE, Dim>::pFun_SPTree visit,
+		utPointer p) {
 	ASSERT(_root!=NULL);
 	_conditional_traversal(_root, t_condition, visit, p);
 }

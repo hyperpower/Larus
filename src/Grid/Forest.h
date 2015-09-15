@@ -105,6 +105,7 @@ public:
 	const pTree getpTree(size_type i, size_type j, size_type = 0) const;
 
 	pTree getpTree(const typename DIM_TYPE::Point&);
+	pNode getpNode(const typename DIM_TYPE::Point&);
 	//--------------------------
 	pTree getMinXeTree() const;
 	pTree getMaxXeTree() const;
@@ -411,6 +412,15 @@ typename Forest<DIM_TYPE>::pTree Forest<DIM_TYPE>::getpTree(
 		}
 	}
 	return NULL_PTR;
+}
+template<typename DIM_TYPE>
+typename Forest<DIM_TYPE>::pNode Forest<DIM_TYPE>::getpNode(const typename DIM_TYPE::Point& p){
+	pTree pt = getpTree(p);
+	if(pt==NULL_PTR){
+		return NULL_PTR;
+	}else{
+		return pt->Find(p);
+	}
 }
 
 template<typename DIM_TYPE>

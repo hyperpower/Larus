@@ -17,7 +17,25 @@
 #include "Preconditioner.h"
 
 namespace Larus {
+/**
+ * slove
+ * a1 x + b1 y = c1
+ * a2 x + b2 y = c2
+ *
+ */
 
+template<class VALUE>
+int solve(VALUE a1, VALUE b1, VALUE c1, VALUE a2, VALUE b2, VALUE c2, VALUE& x,
+		VALUE& y) {
+	assert(!(a2 == 0 && b2 == 0));
+	assert(!(a1 == 0 && b1 == 0));
+	if (a2 == 0) {
+		y = double(c2) / double(b2);
+	} else {
+		y = double(c1 - a1 * c2 / a2) / double(b1 - a1 * b2 / a2 + SMALL);
+	}
+	x = double(c1 - b1 * y) / double(a1 + SMALL);
+}
 template<class VALUE>
 int solver_gaussian_elimination(  //solver
 		MatrixV<VALUE>& A,      //the Matrix     [in]  solver will change matrix
@@ -122,10 +140,10 @@ int Jacobi(const MatrixSCR<VALUE> &A,    // A  The matrix
 			}
 		}
 		for (st j = T.row_ptr(i); j < T.row_ptr(i + 1); ++j) {
-			if (j == flag ) {
+			if (j == flag) {
 				C(i) = b(T.col_ind(j)) / dv;
-			}else{
-				T.val(j) = - T.val(j) / dv;
+			} else {
+				T.val(j) = -T.val(j) / dv;
 			}
 		}
 	}

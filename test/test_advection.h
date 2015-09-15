@@ -147,11 +147,11 @@ Float set_half1half0(Float x, Float y, Float z) {
 }
 
 Float set_case4u(Float x, Float y, Float z) {
-	return 2.0*y*(1.0-x*x);
+	return 2.0 * y * (1.0 - x * x);
 }
 
 Float set_case4v(Float x, Float y, Float z) {
-	return -2.0*x*(1.0-y*y);
+	return -2.0 * x * (1.0 - y * y);
 }
 // the four test base on paper
 // M.S. Darwish, F. Moukalled , TVD schemes for unstructured grids
@@ -481,7 +481,6 @@ void test_advection_uni4(int si) {
 		lv.push_back(getcVal((*iter), ae.phi_idx));
 	}
 
-
 	gnuplot_show_as_surface((*ae.pforest), ae.phi_idx);
 
 //cout << "End of test =========\n";
@@ -507,13 +506,13 @@ void test_advection_uni_advance() {
 	arrayList_st arridx(7);  //data index
 	arridx.assign_forward(1, 1);
 	arrayList arrval(7);     //data plus
-	arrval[0] = 0;    // phi_idx;
-	arrval[1] = 0;    // phi_idx;
-	arrval[2] = 0;    // phi_idx;
+	arrval[0] = 0;      // phi_idx;
+	arrval[1] = 0;      // phi_idx;
+	arrval[2] = 0;      // phi_idx;
 	arrval[3] = 0.005; // dt_idx;
-	arrval[4] = 1;   // u_idx;
-	arrval[5] = 1;   // v_idx;
-	arrval[6] = 0;   // w_idx;
+	arrval[4] = 1;     // u_idx;
+	arrval[5] = 1;     // v_idx;
+	arrval[6] = 0;     // w_idx;
 	plus_scalar_on_leaf( // 2D Forest
 			forest,      // pQuadTree
 			arridx,      // data index
@@ -554,6 +553,38 @@ void test_advection_uni_advance() {
 	gnuplot_show_as_surface((*ae.pforest), ae.phi_idx);
 
 	cout << "End of test =========\n";
+}
+
+Float pfun_c(Float x, Float y, Float z) {
+	return (x - 1) * (x - 1 ) + (y - 1) * (y - 1);
+}
+
+void test_advection_adp() {
+	int L = 3;
+	int N = 3;
+	int max_level = 5;
+	Forest2D forest(L, N, 0.0, 0.0, 1, max_level);
+	ListT<Point2D> lp;
+	initial_adaptation_eq(forest, pfun_c, 1, 3, 5);
+	forest.ConnectTrees();
+	forest.show_info();
+
+	gnuplot_show(forest);
+	resize_array_on_center_leaf(forest, 4);
+	set_index_on_center_leaf(forest, Idx_IDX);
+
+	Point2D p(2.02,0.9);
+	pQTNode pn = forest.getpNode(p);
+	pn->show();
+	arrayList_st arridx(1);
+	arrayList arrres(1);
+	_interpolate_node_LS( // 2D QuadTree Node Least Square
+			pn, //node
+			p,  //point
+			arridx,  //data index
+			arrres      //data res
+			);
+
 }
 
 }

@@ -420,7 +420,7 @@ int BinaryTree<TYPE>::_height(pTreeNode Current) const {
 	if (Current == NULL_PTR)
 		return 0;
 	else
-		return 1 + max(_height(Current->lchild), _height(Current->rchild));
+		return 1 + MAX(_height(Current->lchild), _height(Current->rchild));
 }
 
 template<class TYPE>

@@ -26,7 +26,8 @@ enum SPNodeType {
 };
 enum SPNodeIdx {
 	//=========================
-	//
+	//   y
+	//   |
 	//   ---------------
 	//   |  MP  |  PP  |
 	//   |  0   |  2   |
@@ -35,7 +36,7 @@ enum SPNodeIdx {
 	//   |  SW  |  SE  |
 	//   |  1   |  3   |
 	//   |  MM  |  PM  |
-	//   ---------------
+	//   ------------------->x
 	//
 	//   ---------------  ---------------
 	//   |  MPM |  PPM |  |  MPP |  PPP |
@@ -190,32 +191,32 @@ const SPDirection SP_DIR_OP[26] = //
 		};
 const int SP_DIR_MorP[26] =    //
 		{    //
-		        -1,//SPD_MP = 0,
-				-1,//SPD_MM = 1,
-				1,//SPD_PP = 2,
-				-1,//SPD_PM = 3,
-				-1,//SPD_IM = 4,
-				1,//SPD_JP = 5,
-				1,//SPD_IP = 6,
-				-1,//SPD_JM = 7,
-				1,//SPD_KP = 8,
-				-1,//SPD_KM = 9,
-				-1,//SPD_MP = 10 + 0,
-				-1,//SPD_MM = 10 + 1
-				1,//SPD_PP = 10 + 2,
-				-1,//SPD_PM = 10 + 3,
-				-1,//SPD_MP = 14 + 0,
-				-1,//SPD_MM = 14 + 1,
-				1,//SPD_PP = 14 + 2,
-				-1,//SPD_PM = 14 + 3,
-				-1,//SPD_MMM = 17 + 1,
-				-1,//SPD_PMM = 17 + 2,
-				-1,//SPD_MPM = 17 + 3,
-				-1,//SPD_PPM = 17 + 4,
-				-1,//SPD_MMP = 17 + 5,
-				-1,//SPD_PMP = 17 + 6,
-				-1,//SPD_MPP = 17 + 7,
-				1,//SPD_PPP = 17 + 8,
+		-1,     //SPD_MP = 0,
+				-1,     //SPD_MM = 1,
+				1,     //SPD_PP = 2,
+				-1,     //SPD_PM = 3,
+				-1,     //SPD_IM = 4,
+				1,     //SPD_JP = 5,
+				1,     //SPD_IP = 6,
+				-1,     //SPD_JM = 7,
+				1,     //SPD_KP = 8,
+				-1,     //SPD_KM = 9,
+				-1,     //SPD_MP = 10 + 0,
+				-1,     //SPD_MM = 10 + 1
+				1,     //SPD_PP = 10 + 2,
+				-1,     //SPD_PM = 10 + 3,
+				-1,     //SPD_MP = 14 + 0,
+				-1,     //SPD_MM = 14 + 1,
+				1,     //SPD_PP = 14 + 2,
+				-1,     //SPD_PM = 14 + 3,
+				-1,     //SPD_MMM = 17 + 1,
+				-1,     //SPD_PMM = 17 + 2,
+				-1,     //SPD_MPM = 17 + 3,
+				-1,     //SPD_PPM = 17 + 4,
+				-1,     //SPD_MMP = 17 + 5,
+				-1,     //SPD_PMP = 17 + 6,
+				-1,     //SPD_MPP = 17 + 7,
+				1,     //SPD_PPP = 17 + 8,
 		};
 
 const SPNodeIdx SP_NODEIDX[8] = { MPM, MMM, PPM, PMM, MPP, MMP, PPP, PMP };
@@ -472,13 +473,13 @@ SPDirection Direction_Compose(const SPDirection&, const SPDirection&); //2D
 inline SPDirection oppositeDirection(const SPDirection& d) {
 	return d == ErrSPDirection ? ErrSPDirection : SP_DIR_OP[int(d)];
 }
-inline bool isPlus(const SPDirection& d){
-	ASSERT(d!=ErrSPDirection);
-	return SP_DIR_MorP[int(d)]==1;
+inline bool isPlus(const SPDirection& d) {
+	ASSERT(d != ErrSPDirection);
+	return SP_DIR_MorP[int(d)] == 1;
 }
-inline bool isMinus(const SPDirection& d){
-	ASSERT(d!=ErrSPDirection);
-	return SP_DIR_MorP[int(d)]==-1;
+inline bool isMinus(const SPDirection& d) {
+	ASSERT(d != ErrSPDirection);
+	return SP_DIR_MorP[int(d)] == -1;
 }
 //  == to ==
 SPNodeIdx toSPNodeIdx(int i);
@@ -504,9 +505,10 @@ public:
 	typedef Data* pData;
 	typedef Cell Cell_type;
 	typedef Data Data_type;
-	typedef void (*pFun_process_SP)(pNode, utPointer);
+	typedef void (*pFun_SPNode)(pNode, utPointer);
+	typedef void (*pFun_SPNode_conditional)(arrayList&, pNode, utPointer);
 	static const int DIM = Dim;
-	static const int NUM_CELLS = Cell::NUM_VERTEXES;  //gcc 4.8
+	static const int NUM_CELLS = Cell::NUM_VERTEXES;      //gcc 4.8  2D=4 3D=8
 	static const int NUM_NEBOR = Cell::NUM_VERTEXES - 1;  //2D=3  3D=7
 protected:
 	int _nodetype;
@@ -514,7 +516,8 @@ protected:
 	int _idx;
 
 	inline int _height(const SPNode<Cell, Data, Dim>*) const;
-	void _traversal(pNode pn, pFun_process_SP visit, utPointer p);
+	void _traversal_conditional(pNode, pFun_SPNode_conditional, pFun_SPNode, utPointer);
+	void _traversal(pNode pn, pFun_SPNode visit, utPointer p);
 public:
 	pCell cell;
 	pNode father;
@@ -552,7 +555,8 @@ public:
 			pNode = NULL_PTR, pNode = NULL_PTR);
 
 	int creatChild_all(size_t max_level);
-	void Traversal(pFun_process_SP, utPointer);
+	void Traversal(pFun_SPNode, utPointer);
+	void Traversal_conditional(pFun_SPNode_conditional, pFun_SPNode, utPointer);
 	int whichChild(const typename Cell::Point &p) const;  //revisable
 
 	//shape relate function =====================
@@ -763,7 +767,7 @@ int SPNode<Cell, Data, Dim>::creatChild_all(size_t max_level) {
 }
 template<typename Cell, typename Data, int Dim>
 void SPNode<Cell, Data, Dim>::_traversal(SPNode<Cell, Data, Dim>::pNode pn,
-		SPNode<Cell, Data, Dim>::pFun_process_SP visit, utPointer p) {
+		SPNode<Cell, Data, Dim>::pFun_SPNode visit, utPointer p) {
 	if (pn == NULL_PTR) {
 		return;
 	} else {
@@ -778,11 +782,40 @@ void SPNode<Cell, Data, Dim>::_traversal(SPNode<Cell, Data, Dim>::pNode pn,
 		}
 	}
 }
+template<typename Cell, typename Data, int Dim>
+void SPNode<Cell, Data, Dim>::_traversal_conditional(
+		SPNode<Cell, Data, Dim>::pNode pn, //pNode
+		SPNode<Cell, Data, Dim>::pFun_SPNode_conditional t_condition, //conditional traversal pfunction
+		SPNode<Cell, Data, Dim>::pFun_SPNode visit,  // visit function
+		utPointer p) { // un type pointer
+	if (pn == NULL_PTR) {
+		return;
+	} else {
+		(*visit)(pn, p);
+		if (pn->hasChild()) {
+			arrayList avt(NUM_CELLS);
+			t_condition(avt, pn, p);
+			for (int i = 0; i < NUM_CELLS; i++) {
+				pNode c = pn->child[i];
+				if (c != NULL_PTR && avt[i] == 1) {
+					_traversal_conditional(c, t_condition, visit, p);
+				}
+			}
+		}
+	}
+}
 
 template<typename Cell, typename Data, int Dim>
 void SPNode<Cell, Data, Dim>::Traversal(
-		SPNode<Cell, Data, Dim>::pFun_process_SP visit, utPointer p) {
+		SPNode<Cell, Data, Dim>::pFun_SPNode visit, utPointer p) {
 	_traversal(this, visit, p);
+}
+template<typename Cell, typename Data, int Dim>
+void SPNode<Cell, Data, Dim>::Traversal_conditional(
+		SPNode<Cell, Data, Dim>::pFun_SPNode_conditional t_condition, //
+		SPNode<Cell, Data, Dim>::pFun_SPNode visit, //
+		utPointer p) { //
+	_traversal_conditional(this, t_condition, visit, p);
 }
 template<typename Cell, typename Data, int Dim>
 int SPNode<Cell, Data, Dim>::whichChild(const typename Cell::Point &p) const {

@@ -51,9 +51,9 @@ int main() {
 	//test_gauss_e();
 	//cl::work_flow_control();
 	//test_sp1();
-	show_opencl_info();
-	vector_dot();
-
+	//show_opencl_info();
+	//vector_dot();
+	test_advection_adp();
 	cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
 	return 0;
 }

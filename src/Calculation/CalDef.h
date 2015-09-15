@@ -37,7 +37,7 @@ inline int getIDX(const Forest2D::const_iterator& iter){
 	return iter->data->aCenterData[Idx_IDX];
 }
 // get center data on array
-template<class NODE>
+template<class NODE>  //get center value
 inline Float getcVal(const NODE* pn, const LarusDef::size_type idx){
 	ASSERT(pn!=NULL_PTR);
 	ASSERT(pn->data!=NULL_PTR);

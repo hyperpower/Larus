@@ -114,7 +114,6 @@ void Poisson_Eq<DIMENSION>::set_beta(
 template<class DIMENSION>
 int Poisson_Eq<DIMENSION>::_clear_utp_data(typename Forest_::pNode pn) {
 	if (pn->data->utp_data != NULL_PTR) {
-		typedef typename Forest_::Node Node;
 		typedef typename Forest_::Face Face;
 		typedef Pair<Face*, Expression*> Pair;
 		typedef ListT<Pair> List;
@@ -135,7 +134,6 @@ int Poisson_Eq<DIMENSION>::_clear_utp_data(typename Forest_::pNode pn) {
 template<class DIMENSION>
 int Poisson_Eq<DIMENSION>::_node_exp(typename Forest_::pNode pn,
 		Expression& exp) {
-	typedef typename Forest_::Node Node;
 	typedef typename Forest_::Face Face;
 	typedef Pair<Face*, Expression*> Pair;
 	typedef ListT<Pair> List;

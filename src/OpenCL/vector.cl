@@ -40,6 +40,18 @@ __kernel void vec_sum(__global double *sum,
    }                    
 }
 
+__kernel void vec_dot(
+      __global const double* x, // input vector
+      __global const double* y, // input vector
+      __global double *r, // result vector
+      int n // input vector size
+){
+    int id = get_global_id(0);
+    if ( id < n ){
+        r[id] = x[id] * y[id]; // multiply elements, store product
+    }
+}
+
 #define LOCAL_GROUP_XDIM 256
 // Kernel for part 1 of dot product, version 3.
 __kernel __attribute__((reqd_work_group_size(LOCAL_GROUP_XDIM, 1, 1)))
@@ -92,19 +104,6 @@ void dot_persist_kernel(
         r[grp_id] = priv_acc;
     }
 
-}
-
-__kernel
-void dot_mul_kernel(
-      __global const double* x, // input vector
-      __global const double* y, // input vector
-      __global double *r, // result vector
-      int n // input vector size
-){
-    int id = get_global_id(0);
-    if ( id < n ){
-        r[id] = x[id] * y[id]; // multiply elements, store product
-    }
 }
 
 

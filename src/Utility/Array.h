@@ -70,7 +70,9 @@ public:
 		}
 	}
 
-	//operator=
+	/**
+	 * over load operator=
+	 */
 	array<T, N>& operator=(const array<T, N>& rhs) {
 		if (&rhs == this) {
 			return *this;

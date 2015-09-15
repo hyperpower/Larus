@@ -9,6 +9,7 @@
 #include "../Utility/ArrayList.h"
 #include "../IO/IO.h"
 #include "../IO/IO_vtk.h"
+#include "../IO/IO_gnuplot.h"
 #include "../IO/Gnuplot.h"
 #include "../Algebra/Arithmetic.h"
 #include "../Algebra/Interpolation.h"
@@ -603,14 +604,14 @@ bool T_distance_check( //
 	case ErrCSAxis:
 		return false;
 	case CSAxis_X: {
-		if (abs(dis) > pn->cell->gethDx()) {
+		if (ABS(dis) > pn->cell->gethDx()) {
 			return false;
 		} else {
 			return true;
 		}
 	}
 	case CSAxis_Y: {
-		if (abs(dis) > pn->cell->gethDy()) {
+		if (ABS(dis) > pn->cell->gethDy()) {
 			return false;
 		} else {
 			return true;
@@ -618,7 +619,7 @@ bool T_distance_check( //
 	}
 	case CSAxis_Z: {
 		if (NODE::DIM == 3) {
-			if (abs(dis) > pn->cell->gethDz()) {
+			if (ABS(dis) > pn->cell->gethDz()) {
 				return false;
 			} else {
 				return true;
@@ -1502,8 +1503,8 @@ void interpolate_1order_on_face( // 2D QuadTree face
 }
 
 Float interpolate_1order_on_face( // 2D QuadTree Node
-		QTNodeFace& face,                      //node
-		LarusDef::size_type idx          //data index
+		QTNodeFace& face,         //node
+		LarusDef::size_type idx   //data index
 		) {
 	arrayList_st arridx(1);
 	arridx[0] = idx;
@@ -1524,7 +1525,7 @@ Float interpolate_1order_on_face( // 2D QuadTree Node
 	return arrres[0];
 }
 
-void interpolate_1order_weight_on_face( // 2D QuadTree Node
+void interpolate_1order_weight_on_face(  // 2D QuadTree Node
 		pQTNode pn,                      //node
 		SPDirection face,                //face
 		arrayList_st& arridx,            //data index
@@ -1971,6 +1972,63 @@ int _interpolate_node_1order( // 2D QuadTree Node
 // for solving the variable coefficient Poisson equation
 // with jump conditions on irregular domains[J].
 // International journal for numerical methods in fluids, 2006, 52(7): 723-748.
+
+template<typename NODE>
+void pfun_visit_is_leaf(NODE* pn, utPointer utp) {
+	typedef NODE* pNode;
+	if (condition_is_leaf(pn)) {
+		arrayListT<utPointer>& arrutp = (*CAST(arrayListT<utPointer>*, utp));
+		ListT<pNode>& ll = (*(CAST(ListT<pNode>*, arrutp[1])));
+		ll.push_back(pn);
+	}
+}
+const short DIRvsNODEIDX[26][8] = {		//
+		{ 1, 0, 0, 0, 1, 0, 0, 0 },  //
+				{ 0, 1, 0, 0, 0, 1, 0, 0 },  //
+				{ 0, 0, 1, 0, 0, 0, 1, 0 },  //
+				{ 0, 0, 0, 1, 0, 0, 0, 1 },  //
+				{ 1, 1, 0, 0, 1, 1, 0, 0 },  //
+				{ 1, 0, 1, 0, 1, 0, 1, 0 },  //
+				{ 0, 0, 1, 1, 0, 0, 1, 1 },  //
+				{ 0, 1, 0, 1, 0, 1, 0, 1 },  //
+				{ 0, 0, 0, 0, 1, 1, 1, 1 },  //
+				{ 1, 1, 1, 1, 0, 0, 0, 0 },  //
+				{ 0, 0, 0, 0, 0, 1, 0, 1 },  //
+				{ 0, 1, 0, 1, 0, 0, 0, 0 },  //
+				{ 0, 0, 0, 0, 1, 0, 1, 0 },  //
+				{ 1, 0, 1, 0, 0, 0, 0, 0 },  //
+				{ 0, 0, 1, 1, 0, 0, 0, 0 },  //
+				{ 1, 1, 0, 0, 0, 0, 0, 0 },  //
+				{ 0, 0, 0, 0, 0, 0, 1, 1 },  //
+				{ 0, 0, 0, 0, 1, 1, 0, 0 },  //
+				{ 0, 1, 0, 0, 0, 0, 0, 0 },  //
+				{ 0, 0, 0, 1, 0, 0, 0, 0 },  //
+				{ 1, 0, 0, 0, 0, 0, 0, 0 },  //
+				{ 0, 0, 1, 0, 0, 0, 0, 0 },  //
+				{ 0, 0, 0, 0, 0, 1, 0, 0 },  //
+				{ 0, 0, 0, 0, 0, 0, 0, 1 },  //
+				{ 0, 0, 0, 0, 1, 0, 0, 0 },  //
+				{ 0, 0, 0, 0, 0, 0, 1, 0 },  //
+		};
+template<typename NODE>
+void pfun_condition_is_on_direction(arrayList& arr, NODE* pn, utPointer utp) {
+	arrayListT<utPointer>& arrutp = (*CAST(arrayListT<utPointer>*, utp));
+	SPDirection& dir = (*(CAST(SPDirection*, arrutp[0])));
+	for (short i = 0; i < NODE::NUM_CELLS; ++i) {
+		arr[i] = (DIRvsNODEIDX[short(dir)][i]==1) ? 1 : 0;
+	}
+}
+
+template<typename NODE>
+void _get_leaf_node_list_on_direction(NODE* pn, SPDirection dir,
+		ListT<NODE*>& ll) {
+	arrayListT<utPointer> arrutp(2);
+	arrutp[0] = &dir;
+	arrutp[1] = &ll;
+	pn->Traversal_conditional(pfun_condition_is_on_direction,
+			pfun_visit_is_leaf, &arrutp);
+}
+
 int _interpolate_node_LS(  // 2D QuadTree Node Least Square
 		pQTNode pn,            //pnode
 		const Point2D& point,  //point
@@ -1988,13 +2046,23 @@ int _interpolate_node_LS(  // 2D QuadTree Node Least Square
 		arrayList arrgpx(arridx.size());
 		arrayList arrgpy(arridx.size());
 		// get neigbor node
-		// method1 stencil  get 4 neighbor of P
-		//    n
+		// method1 stencil  get 8 neighbor of P
+		//  n n n
 		//  n p n
-		//    n
-		ListT<pQTNode> lneip;
+		//  n n n
+		ListT<pQTNode> lpnei;
+		for (int i = 0; i <= 7; ++i) {
+			pQTNode pnei = pn->getNeighborFast(toDirection(i));
+			if (pnei != NULL_PTR) {
+				_get_leaf_node_list_on_direction(pnei, oppositeDirection(toDirection(i)), lpnei);
+			}
+		}
+		Float a1 = 0; // sum_w_dx_dx =0;
+		Float b = 0;  // sum_w_dx_dy =0;
+		Float a2 = 0; // sum_w_dy_dy =0;
 
-		// distance
+		// distance -----------------------------
+
 		return 1;
 	} else {
 		std::cerr << " >! Interploate point is not in cell\n";

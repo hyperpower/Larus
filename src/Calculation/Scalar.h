@@ -247,9 +247,9 @@ int interpolate_1order(pQuadTree pqt, const Point2D& point,
 		arrayList_st& arridx, arrayList& arrres); //QuadTree
 int interpolate(         // 2D Forest
 		Forest2D& forest,       //Forest2D
-		const Point2D& point,  //point
+		const Point2D& point,   //point
 		arrayList_st& arridx,   //data index
-		arrayList& arrres      //data res
+		arrayList& arrres       //data res
 		);
 int interpolate_1order(
 		Forest2D& forest,      //forest2D
@@ -277,17 +277,17 @@ void _interpolate_gradient_on_axis( // 2D QuadTree Node
 		arrayList_st& arridx,  //data index
 		arrayList& arrres   //data res
 		);
-void interpolate_gradient_on_face( // 2D QuadTree Node
-		pQTNode pn,                         //node
-		SPDirection face,                //face
-		arrayList_st& arridx, //data index
-		arrayList& arrres                   //data res
+void interpolate_gradient_on_face(    // 2D QuadTree Node
+		pQTNode pn,                   //node
+		SPDirection face,             //face
+		arrayList_st& arridx,         //data index
+		arrayList& arrres             //data res
 		);
-void interpolate_gradient_at_center( // 2D QuadTree Node
-		pQTNode pn,                      //node
-		CSAxis axis,            //axix
-		arrayList_st& arridx, //data index
-		arrayList& arrres                   //data res
+void interpolate_gradient_at_center(  // 2D QuadTree Node
+		pQTNode pn,                   //node
+		CSAxis axis,                  //axes
+		arrayList_st& arridx,         //data index
+		arrayList& arrres             //data res
 		);
 //--------------------------
 void interpolate_expression_on_axis( // 2D QuadTree Node
