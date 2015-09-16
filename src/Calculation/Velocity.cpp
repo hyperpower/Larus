@@ -21,7 +21,7 @@ void cal_stream_line(  //Forest 2D
 		LarusDef::size_type idxv) {  //idx v
 	pQuadTree pt = forest.getpTree(bp);
 	_IF_TRUE_RETRUN(NULL_PTR==pt);
-	_IF_TRUE_RETRUN(NULL_PTR==pt->Find(bp));
+	_IF_TRUE_RETRUN(NULL_PTR==pt->getpNode(bp));
 	list.push_back(bp);
 	Point2D op, np;
 	op = bp;

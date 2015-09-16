@@ -47,7 +47,7 @@ void test_nei_3D() {
 	tree.show_info();
 	tree.draw_to_vtk_leaf("octree.vtk");
 	Point3D pf(0.3, 0.45, 0.58);
-	pOCNode ori = tree.Find(pf);
+	pOCNode ori = tree.getpNode(pf);
 	cout << ori->getIdx() << endl;
 	//ori->draw_self("ori.vtk", 1);
 

@@ -419,7 +419,7 @@ typename Forest<DIM_TYPE>::pNode Forest<DIM_TYPE>::getpNode(const typename DIM_T
 	if(pt==NULL_PTR){
 		return NULL_PTR;
 	}else{
-		return pt->Find(p);
+		return pt->getpNode(p);
 	}
 }
 

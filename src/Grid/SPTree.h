@@ -119,7 +119,7 @@ public:
 	const pNode getpRootNode() const {
 		return _root;
 	}
-	pNode Find(const typename NODE::Cell_type::Point&);
+	pNode getpNode(const typename NODE::Cell_type::Point&);
 
 	//Neighbor tree ==============================
 	void setNeighborTree( //
@@ -979,7 +979,7 @@ void SPTree<NODE, Dim>::show_info() {
 	std::cout << Float(totalleaf) / Float(totalnode) * 100 << std::endl;
 }
 template<class NODE, LarusDef::size_type Dim>
-typename SPTree<NODE, Dim>::pNode SPTree<NODE, Dim>::Find(
+typename SPTree<NODE, Dim>::pNode SPTree<NODE, Dim>::getpNode(
 		const typename NODE::Cell_type::Point& p) {
 	ASSERT(this->_root != NULL_PTR);
 	if (!isInOnTree(p)) {

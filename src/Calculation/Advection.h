@@ -131,11 +131,13 @@ public:
 	int _find_C(pFace, pNode&, Float);
 	int _face_scheme_boundary_fou(pFace, Expression&);
 	int _face_scheme_equal_fou(pFace, Expression&);
+	int _face_scheme_fine_coarse_fou(pFace, Expression&);
 	int _face_scheme_fou(pFace, Expression&);
 	int _face_exp_fou(pNode);
 
 	Float _face_scheme_boundary_tvd(pFace, Expression&, st);
 	Float _face_scheme_equal_tvd(pFace, Expression&, st);
+	Float _face_scheme_fine_coarse_tvd(pFace, Expression&, st);
 	Float _face_scheme_tvd(pFace, Expression&, st);
 	int _face_exp_tvd(pNode, st);
 
@@ -148,6 +150,7 @@ public:
 	int _bulid_matrix_fou(MatrixSCR<Float>& mat, arrayListV<Float>& b);
 	int _bulid_matrix_tvd(MatrixSCR<Float>& mat, arrayListV<Float>& b);
 	int slove(Float tol);
+	int slove_fou(Float tol);
 };
 
 template<class DIMENSION>
@@ -283,7 +286,7 @@ Float Advection_Eq<DIMENSION>::_face_scheme_tvd(pFace pface, Expression& exp,
 		break;
 	}
 	case SPFT_FineCoarse:
-		std::cout << "Fine Corase function unfinish\n";
+		this->_face_scheme_fine_coarse_tvd(pface, exp, idx);
 		break;
 	case SPFT_CoarseFine:
 		std::cout << "Corase Fine function unfinish\n";
@@ -300,7 +303,7 @@ Float Advection_Eq<DIMENSION>::_face_scheme_equal_tvd(pFace pface,
 		Expression& exp, st idx) {
 	int arr_veo_idx[] = { u_idx, v_idx, u_idx, v_idx, w_idx, w_idx };
 
-	st    veo_idx = arr_veo_idx[int(pface->direction) - 4];
+	st veo_idx = arr_veo_idx[int(pface->direction) - 4];
 	Float veo_f = interpolate_1order_on_face((*pface), veo_idx);
 	//get U C D ------------------------------
 	pNode pU = NULL_PTR;
@@ -333,14 +336,22 @@ Float Advection_Eq<DIMENSION>::_face_scheme_equal_tvd(pFace pface,
 	// exp should be empty
 	exp.Insert(ExpTerm(getIDX(pC), pC, 1.0));
 	// Analyze pU
-	Expression expU;
-	if (pU != NULL_PTR) {
-		expU.Insert(ExpTerm(getIDX(pU), pU, 1.0));  // revise
-	} else {
-		return 0.0;
-	}
+	//Expression expU;
+	//assert(pU != NULL_PTR);
+	//if (condition_is_leaf(pU)) {
+	//	expU.Insert(ExpTerm(getIDX(pU), pU, 1.0));  //
+	//} else { //pU has children -------
+	//	ListT<pQTNode> lch;
+	//	getListpNode_children(pU, lch);
+	//	ListT<pQTNode>::size_type count = lch.size();
+	//	for(ListT<pQTNode>::iterator iter=lch.begin(); iter!=lch.end(); ++iter){
+	//		pQTNode pn=(*iter);
+	//		expU.Insert(ExpTerm(getIDX(pn), pn, 1.0/double(count)));
+	//	}
+	//}
+	//--------------------------
 	// cal limiter
-	Float vU = expU.cal_val(idx);
+	Float vU = getAverageVal(pU, idx);
 	Float vC = getcVal(pC, idx);
 	Float vD = getcVal(pD, idx);
 	// cal \Psi(r)
@@ -378,11 +389,13 @@ Float Advection_Eq<DIMENSION>::_face_scheme_boundary_tvd(pFace pface,
 		} else {
 			pC = pBCM->find_ghost(getIDX(pface->pnode), pface->direction);
 			pD = pface->pnode;
+			pU = pC;
 		}
 	} else {
 		if (veo_f > 0) {
 			pC = pBCM->find_ghost(getIDX(pface->pnode), pface->direction);
 			pD = pface->pnode;
+			pU = pC;
 		} else {
 			pC = pface->pnode;
 			pD = pBCM->find_ghost(getIDX(pface->pnode), pface->direction);
@@ -393,14 +406,9 @@ Float Advection_Eq<DIMENSION>::_face_scheme_boundary_tvd(pFace pface,
 	// exp should be empty
 	exp.Insert(ExpTerm(getIDX(pC), pC, 1.0));
 	// Analyze pU
-	Expression expU;
-	if (pU != NULL_PTR) {
-		expU.Insert(ExpTerm(getIDX(pU), pU, 1.0));  // revise
-	} else {
-		return 0.0;
-	}
+	ASSERT(pU!= NULL_PTR);
 	// cal limiter
-	Float vU = expU.cal_val(phi_idx);
+	Float vU = getAverageVal(pU, idx);
 	Float vC = getcVal(pC, phi_idx);
 	Float vD = getcVal(pD, phi_idx);
 	// cal \Psi(r)
@@ -412,6 +420,58 @@ Float Advection_Eq<DIMENSION>::_face_scheme_boundary_tvd(pFace pface,
 	return cor;
 
 }
+
+template<class DIMENSION>
+Float Advection_Eq<DIMENSION>::_face_scheme_fine_coarse_tvd(pFace pface,
+		Expression& exp, st idx) {
+	int arr_veo_idx[] = { u_idx, v_idx, u_idx, v_idx, w_idx, w_idx };
+
+	st veo_idx = arr_veo_idx[int(pface->direction) - 4];
+	Float veo_f = interpolate_1order_on_face((*pface), veo_idx);
+	//get U C D ------------------------------
+	pNode pU = NULL_PTR;
+	pNode pC = NULL_PTR;
+	pNode pD = NULL_PTR;
+	if (isPlus(pface->direction)) {
+		if (veo_f > 0) {
+			pC = pface->pnode;
+			pD = pface->pneighbor;
+			find_neighbor_2(pC, oppositeDirection(pface->direction), pU,
+					(*pBCM));
+		} else {
+			pC = pface->pneighbor;
+			pD = pface->pnode;
+			find_neighbor_2(pC, pface->direction, pU, (*pBCM));
+		}
+	} else {
+		if (veo_f > 0) {
+			pC = pface->pneighbor;
+			pD = pface->pnode;
+			find_neighbor_2(pC, pface->direction, pU, (*pBCM));
+		} else {
+			pC = pface->pnode;
+			pD = pface->pneighbor;
+			find_neighbor_2(pC, oppositeDirection(pface->direction), pU,
+					(*pBCM));
+		}
+	}
+	//
+	// exp should be empty
+	exp.Insert(ExpTerm(getIDX(pC), pC, 1.0));
+
+	// cal limiter
+	Float vU = getAverageVal(pU, idx);
+	Float vC = getcVal(pC, idx);
+	Float vD = getcVal(pD, idx);
+	// cal \Psi(r)
+	Float r = (vC - vU) / (vD - vC + SMALL);
+	Float psi = limiter(r, scheme_idx);
+	Float cor = 0.5 * psi * (vD - vC);
+	exp.Insert(ExpTerm(ExpTerm::IDX_CONST, NULL_PTR, cor));
+
+	return cor;
+}
+
 
 template<class DIMENSION>
 int Advection_Eq<DIMENSION>::_node_exp_adv_t(pNode pn, Float dt,
@@ -528,7 +588,7 @@ int Advection_Eq<DIMENSION>::advance(int step) {
 				it != pforest->end(); ++it) {
 			pNode pn = it.get_pointer();
 			Expression exp;
-			_node_exp_adv_t(pn, getcVal(pn, dt_idx) * 0.5, exp);  //advance half dt
+			_node_exp_adv_t(pn, getcVal(pn, dt_idx) * 0.5, exp); //advance half dt
 			exp.Insert(ExpTerm(getIDX(pn), pn, 1.0));
 			refcVal(pn, phin_idx) = exp.cal_val(phi_idx);
 			//
@@ -762,6 +822,28 @@ int Advection_Eq<DIMENSION>::slove(Float tol) {
 	return 0;
 }
 template<class DIMENSION>
+int Advection_Eq<DIMENSION>::slove_fou(Float tol) {
+	MatrixSCR<Float> mat;
+	arrayListV<Float> b;
+	this->_bulid_matrix_fou(mat, b);
+	arrayListV<Float> x(b.size());
+	// set up ========
+	int max_iter = 1000;
+	ListT<Float> lr;	     //list residual
+	//solver =======================
+	int sf = Dia_BiCGSTAB(mat, x, b, max_iter, tol, lr);
+	if (sf != 0 && sf != 1) {
+		std::cerr << " >! solver failed \n";
+		return -1;
+	}
+	// put the value back
+	for (typename Forest_::iterator iter = pforest->begin();
+			iter != pforest->end(); ++iter) {
+		refcVal(iter, phi_idx) = x[getIDX(iter)];
+	}
+	return 0;
+}
+template<class DIMENSION>
 int Advection_Eq<DIMENSION>::_clear_utp_data(pNode pn) {
 	if (pn->data->utp_data != NULL_PTR) {
 		typedef typename Forest_::Face Face;
@@ -846,6 +928,21 @@ int Advection_Eq<DIMENSION>::_face_scheme_equal_fou(pFace pface,
 	return 1;
 }
 template<class DIMENSION>
+int Advection_Eq<DIMENSION>::_face_scheme_fine_coarse_fou(pFace pface,
+		Expression& exp) {
+	// This function is same with equal ==========================
+	int arr_veo_idx[] = { u_idx, v_idx, u_idx, v_idx, w_idx, w_idx };
+	st veo_idx = arr_veo_idx[int(pface->direction) - 4];
+	Float veo_f = interpolate_1order_on_face((*pface), veo_idx);
+	//get U C D ------------------------------
+	pNode pC = NULL_PTR;
+	_find_C(pface, pC, veo_f);
+	//
+	// exp should be empty before insert
+	exp.Insert(ExpTerm(getIDX(pC), pC, 1.0));
+	return 1;
+}
+template<class DIMENSION>
 int Advection_Eq<DIMENSION>::_face_scheme_fou(pFace pface, Expression& exp) {
 	//face type
 	switch (pface->face_type) {
@@ -859,10 +956,10 @@ int Advection_Eq<DIMENSION>::_face_scheme_fou(pFace pface, Expression& exp) {
 		break;
 	}
 	case SPFT_FineCoarse:
-		std::cout << "Fine Corase function unfinish\n";
+		this->_face_scheme_fine_coarse_fou(pface, exp);
 		break;
 	case SPFT_CoarseFine:
-		std::cout << "Corase Fine function unfinish\n";
+		std::cout << "Corase Fine function unfinish first order upwind\n";
 		break;
 	default:
 		return -1;

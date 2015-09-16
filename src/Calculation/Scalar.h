@@ -256,6 +256,11 @@ int interpolate_1order(
 		const Point2D& point,  //point
 		arrayList_st& arridx,  //idx
 		arrayList& arrres);    // 2D Forest
+int interpolate_LS(
+		Forest2D& forest,      //forest2D
+		const Point2D& point,  //point
+		arrayList_st& arridx,  //idx
+		arrayList& arrres);    // 2D Forest
 void interpolate(                  // 2D Forest
 		Forest2D& forest,          //Forest
 		const ListT<Point2D>& lp,  //point

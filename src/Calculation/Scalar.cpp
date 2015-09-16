@@ -632,6 +632,7 @@ bool T_distance_check( //
 		return false;
 	}
 }
+
 template<typename NODE>
 void visit_averange_value_from_leaf(NODE* pn, utPointer up) {
 	if (condition_is_leaf(pn)) {
@@ -647,6 +648,7 @@ void visit_averange_value_from_leaf(NODE* pn, utPointer up) {
 		}
 	}
 }
+
 template<typename NODE>
 void T_cal_averange_value_from_leaf(        //
 		NODE* pn,  //pNode
@@ -1973,62 +1975,6 @@ int _interpolate_node_1order( // 2D QuadTree Node
 // with jump conditions on irregular domains[J].
 // International journal for numerical methods in fluids, 2006, 52(7): 723-748.
 
-template<typename NODE>
-void pfun_visit_is_leaf(NODE* pn, utPointer utp) {
-	typedef NODE* pNode;
-	if (condition_is_leaf(pn)) {
-		arrayListT<utPointer>& arrutp = (*CAST(arrayListT<utPointer>*, utp));
-		ListT<pNode>& ll = (*(CAST(ListT<pNode>*, arrutp[1])));
-		ll.push_back(pn);
-	}
-}
-const short DIRvsNODEIDX[26][8] = {		//
-		{ 1, 0, 0, 0, 1, 0, 0, 0 },  //
-				{ 0, 1, 0, 0, 0, 1, 0, 0 },  //
-				{ 0, 0, 1, 0, 0, 0, 1, 0 },  //
-				{ 0, 0, 0, 1, 0, 0, 0, 1 },  //
-				{ 1, 1, 0, 0, 1, 1, 0, 0 },  //
-				{ 1, 0, 1, 0, 1, 0, 1, 0 },  //
-				{ 0, 0, 1, 1, 0, 0, 1, 1 },  //
-				{ 0, 1, 0, 1, 0, 1, 0, 1 },  //
-				{ 0, 0, 0, 0, 1, 1, 1, 1 },  //
-				{ 1, 1, 1, 1, 0, 0, 0, 0 },  //
-				{ 0, 0, 0, 0, 0, 1, 0, 1 },  //
-				{ 0, 1, 0, 1, 0, 0, 0, 0 },  //
-				{ 0, 0, 0, 0, 1, 0, 1, 0 },  //
-				{ 1, 0, 1, 0, 0, 0, 0, 0 },  //
-				{ 0, 0, 1, 1, 0, 0, 0, 0 },  //
-				{ 1, 1, 0, 0, 0, 0, 0, 0 },  //
-				{ 0, 0, 0, 0, 0, 0, 1, 1 },  //
-				{ 0, 0, 0, 0, 1, 1, 0, 0 },  //
-				{ 0, 1, 0, 0, 0, 0, 0, 0 },  //
-				{ 0, 0, 0, 1, 0, 0, 0, 0 },  //
-				{ 1, 0, 0, 0, 0, 0, 0, 0 },  //
-				{ 0, 0, 1, 0, 0, 0, 0, 0 },  //
-				{ 0, 0, 0, 0, 0, 1, 0, 0 },  //
-				{ 0, 0, 0, 0, 0, 0, 0, 1 },  //
-				{ 0, 0, 0, 0, 1, 0, 0, 0 },  //
-				{ 0, 0, 0, 0, 0, 0, 1, 0 },  //
-		};
-template<typename NODE>
-void pfun_condition_is_on_direction(arrayList& arr, NODE* pn, utPointer utp) {
-	arrayListT<utPointer>& arrutp = (*CAST(arrayListT<utPointer>*, utp));
-	SPDirection& dir = (*(CAST(SPDirection*, arrutp[0])));
-	for (short i = 0; i < NODE::NUM_CELLS; ++i) {
-		arr[i] = (DIRvsNODEIDX[short(dir)][i] == 1) ? 1 : 0;
-	}
-}
-
-template<typename NODE>
-void _get_leaf_node_list_on_direction(NODE* pn, SPDirection dir,
-		ListT<NODE*>& ll) {
-	arrayListT<utPointer> arrutp(2);
-	arrutp[0] = &dir;
-	arrutp[1] = &ll;
-	pn->Traversal_conditional(pfun_condition_is_on_direction,
-			pfun_visit_is_leaf, &arrutp);
-}
-
 int _gradient_center_node_LS( //
 		pQTNode pn,            //pnode
 		arrayList_st& arridx,  //data index
@@ -2045,7 +1991,7 @@ int _gradient_center_node_LS( //
 	for (int i = 0; i <= 7; ++i) {
 		pQTNode pnei = pn->getNeighborFast(toDirection(i));
 		if (pnei != NULL_PTR) {
-			_get_leaf_node_list_on_direction(pnei,
+			getListpNode_direction(pnei,
 					oppositeDirection(toDirection(i)), lpnei);
 		}
 	}
@@ -2099,7 +2045,7 @@ int _interpolate_node_LS(  // 2D QuadTree Node Least Square
 		for (int i = 0; i <= 7; ++i) {
 			pQTNode pnei = pn->getNeighborFast(toDirection(i));
 			if (pnei != NULL_PTR) {
-				_get_leaf_node_list_on_direction(pnei,
+				getListpNode_direction(pnei,
 						oppositeDirection(toDirection(i)), lpnei);
 			}
 		}
@@ -2109,6 +2055,8 @@ int _interpolate_node_LS(  // 2D QuadTree Node Least Square
 		Point2D pointc = pn->cell->getCenterPoint();
 		arrayList arrc1(arridx.size());
 		arrayList arrc2(arridx.size());
+		arrc1.assign(0);
+		arrc2.assign(0);
 		for (ListT<pQTNode>::iterator iter = lpnei.begin(); iter != lpnei.end();
 				++iter) {
 			pQTNode pnei = (*iter);
@@ -2129,7 +2077,7 @@ int _interpolate_node_LS(  // 2D QuadTree Node Least Square
 		arrayList arrgpx(arridx.size());
 		arrayList arrgpy(arridx.size());
 		for (arrayList_st::size_type i = 0; i < arridx.size(); ++i) {
-			solve(a1, b, arrc1[i], a2, b, arrc2[i], arrgpx[i], arrgpy[i]);
+			solve(a1, b, arrc1[i], b, a2, arrc2[i], arrgpx[i], arrgpy[i]);
 		}
 		for (ListT<pQTNode>::iterator iter = lpnei.begin(); iter != lpnei.end();
 				++iter) {
@@ -2138,7 +2086,8 @@ int _interpolate_node_LS(  // 2D QuadTree Node Least Square
 			Float dx = pointcn.x - pointc.x;
 			Float dy = pointcn.y - pointc.y;
 			for (arrayList_st::size_type i = 0; i < arridx.size(); ++i) {
-				arrres[i] = arrgpx[i] * dx + arrgpy[i] * dy + getcVal(pn, arridx[i]);
+				arrres[i] = arrgpx[i] * dx + arrgpy[i] * dy
+						+ getcVal(pn, arridx[i]);
 			}
 		}
 		return 1;
@@ -2154,7 +2103,7 @@ int interpolate( // 2D QuadTree
 		arrayList_st& arridx, //data index
 		arrayList& arrres //data res
 		) {
-	pQTNode pn = pqt->Find(point);
+	pQTNode pn = pqt->getpNode(point);
 	if (pn != NULL_PTR) {
 		return _interpolate_node(pn, point, arridx, arrres);
 	} else {
@@ -2165,7 +2114,7 @@ int interpolate( // 2D QuadTree
 
 int interpolate_1order(pQuadTree pqt, const Point2D& point,
 		arrayList_st& arridx, arrayList& arrres) {
-	pQTNode pn = pqt->Find(point);
+	pQTNode pn = pqt->getpNode(point);
 	if (pn != NULL_PTR) {
 		return _interpolate_node_1order(pn, point, arridx, arrres);
 	} else {
@@ -2198,6 +2147,19 @@ int interpolate_1order(Forest2D& forest, const Point2D& point,
 	pQuadTree pt = forest.getpTree(point);
 	if (pt != NULL_PTR) {
 		return interpolate_1order( // 2D QuadTree
+				pt, point, arridx, arrres);
+	} else {
+		return -1; //not found
+	}
+}
+int interpolate_LS(            //Least Square
+		Forest2D& forest,      //forest2D
+		const Point2D& point,  //point
+		arrayList_st& arridx,  //idx
+		arrayList& arrres) {    // 2D Forest
+	pQTNode pt = forest.getpNode(point);
+	if (pt != NULL_PTR) {
+		return _interpolate_node_LS( // 2D QuadTree
 				pt, point, arridx, arrres);
 	} else {
 		return -1; //not found

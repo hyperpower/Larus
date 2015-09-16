@@ -75,6 +75,10 @@ void test_interploate_2() {
 			fprintf(file, "%lf \n", iter->data->aCenterData[0]);
 		}
 		fclose(file);
+		// show ===
+		if (maxlevel < 8) {
+			gnuplot_show_as_surface(forest, 0);
+		}
 
 		//initial a line ============================
 		Point2D sp(0.1, 0.1);
@@ -92,7 +96,7 @@ void test_interploate_2() {
 		for (ListT<Point2D>::iterator iter = lp.begin(); iter != lp.end();
 				++iter) {
 			//iter->show();
-			interpolate_1order(forest, (*iter), arridx, arrres);
+			interpolate_LS(forest, (*iter), arridx, arrres);
 			ainter[i] = arrres[0];
 			aorig[i] = set_sin(iter->x, iter->y);
 			i++;

@@ -556,7 +556,7 @@ void test_advection_uni_advance() {
 }
 
 Float pfun_c(Float x, Float y, Float z) {
-	return (x - 1) * (x - 1 ) + (y - 1) * (y - 1);
+	return (x - 1) * (x - 1) + (y - 1) * (y - 1);
 }
 
 void test_advection_adp() {
@@ -570,21 +570,72 @@ void test_advection_adp() {
 	forest.show_info();
 
 	gnuplot_show(forest);
-	resize_array_on_center_leaf(forest, 4);
+	resize_array_on_center_leaf(forest, 8);
 	set_index_on_center_leaf(forest, Idx_IDX);
 
-	Point2D p(2.02,0.9);
-	pQTNode pn = forest.getpNode(p);
-	pn->show();
-	arrayList_st arridx(1);
-	arrayList arrres(1);
-	_interpolate_node_LS( // 2D QuadTree Node Least Square
-			pn, //node
-			p,  //point
-			arridx,  //data index
-			arrres      //data res
+	arrayList_st arridx(7);  //data index
+	arridx.assign_forward(1, 1);
+	arrayList arrval(7);     //data plus
+	arrval[0] = 0;    // phi_idx;
+	arrval[1] = 0;    // phi_idx;
+	arrval[2] = 0;    // phi_idx;
+	arrval[3] = 0.005; // dt_idx;
+	arrval[4] = 1;   // u_idx;
+	arrval[5] = 1;   // v_idx;
+	arrval[6] = 0;   // w_idx;
+	plus_scalar_on_leaf( // 2D Forest
+			forest,      // pQuadTree
+			arridx,      // data index
+			arrval       // data plus
 			);
-	arrres.show();
+
+	BCManager<Dimension_2D> bcm(&forest);
+	bcm.new_ghost_nodes();
+
+	Advection_Eq<Dimension_2D> ae(&forest, &bcm, 1, 1, 2, 3, 4, 5, 6);
+	set_scalar_on_leaf_by_function( // 2D Forest
+			forest,        //pQuadTree
+			ae.phi_idx,    //data index
+			set_half1half0 //data plus
+			);
+	gnuplot_show_as_surface((*ae.pforest), ae.phi_idx);
+
+	for (int i = 0; i < bcm.pforest->size(); ++i) {
+		pQuadTree pt = bcm.pforest->getpTree_1d(i);
+		if (pt != NULL_PTR) {
+			for (int ii = 4; ii <= 7; ii++) {
+				if (pt->getNeighborpTree(toDirection(ii)) == NULL) {
+					BoundaryCondition<Dimension_2D> bc;
+					bc.direction = toDirection(ii);
+					bc.tree_idx = i;
+					bc.value_idx = ae.phi_idx;
+					bc.pfun = fun_bc;
+					bcm.add_BC(bc);
+				}
+			}
+		}
+	}
+	bcm.set_bc();
+	//ae.advance(30);
+	cout << "slover  =" << ae.slove(1e-6) << endl;
+	//gnuplot_show_as_contour(ae);
+	ListT<pQTNode> listnode;     //as output
+	getListpNode_leaf_on_line(listnode,           //as output
+			*(ae.pforest),                  // Forest
+			0.0, CSAxis_Y);
+	ListT<Float> lx;
+	ListT<Float> lv;
+	for (ListT<pQTNode>::const_iterator iter = listnode.begin();
+			iter != listnode.end(); iter++) {
+		lx.push_back((*iter)->cell->get(CSAxis_X, eCPL_C));
+		lv.push_back(getcVal((*iter), ae.phi_idx));
+	}
+	//Gnuplot gp("lines");
+	//gp.plot_2(lx, lv, " with lines lw 2");
+
+	gnuplot_show_as_surface((*ae.pforest), ae.phi_idx);
+
+	//cout << "End of test =========\n";
 }
 
 }
