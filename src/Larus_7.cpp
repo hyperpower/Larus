@@ -53,7 +53,7 @@ int main() {
 	//test_sp1();
 	//show_opencl_info();
 	//vector_dot();
-	test_advection_adp();
+	run_test_contraction();
 	cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
 	return 0;
 }

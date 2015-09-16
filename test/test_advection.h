@@ -584,7 +584,7 @@ void test_advection_adp() {
 			arridx,  //data index
 			arrres      //data res
 			);
-
+	arrres.show();
 }
 
 }

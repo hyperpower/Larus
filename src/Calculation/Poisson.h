@@ -256,6 +256,7 @@ int Poisson_Eq<DIMENSION>::_substitute_boudary_val(Expression& exp, st idx) {
 		}
 	}
 	exp.trim_zero();
+	return 1;
 }
 template<class DIMENSION>
 int Poisson_Eq<DIMENSION>::_face_scheme_fine_coarse_gradient_bf(

@@ -562,7 +562,95 @@ void run_test() {
 	drawtofile_gnuplot(dir_outg + "line_sig_1.4.txt", listsig, 1);
 	cout<<"Finish run =====================\n"<<endl;
 }
+void run_test_contraction() {
+	string dir = "/home/czhou/Gerris/Taylor_data/Contraction/re135eo150r0.90L4/";
+	//known value
+	const Float sigx = 10.5;
 
+	arrayListT<utPointer> arg(12);
+
+	//loop for group ===============================
+	string dir_ori = dir + "ori/";
+	string dir_out = dir + "out_each_c/";
+	string dir_outg = dir + "out_group_c/";
+
+	int group = 3;
+	Float t_str = 0;
+	Float t_end = 30;
+	Float dt = 0.1;
+	out_put_time_idx(dir_outg + "time_idx.txt", t_str, t_end, dt);
+	int ic = 0;
+
+	for (Float t = t_str; t <= t_end; t += dt) {
+		//arg set =====================
+		ListT<Segment2D> l_surface;
+		Float head_x;
+		Float tail_x;
+		Float max_y;
+		Float tail_xc;
+		Float u;
+		Float v;
+		Float x;
+		Float y;
+		ListT<Segment2D> b_sur;
+		ListT<Segment2D> t_sur;
+		Point2D p_neck;
+		// =============================
+		arg[0] = &l_surface;
+		arg[1] = &head_x;
+		arg[2] = &tail_x;
+		arg[3] = &max_y;
+		arg[4] = &tail_xc;
+		arg[5] = &u;
+		arg[6] = &v;
+		arg[7] = &x;
+		arg[8] = &y;
+		arg[9] = &b_sur;  //
+		arg[10] = &t_sur;
+		arg[11] = &p_neck;
+		//new forest ==================
+		GerrisFileAdp<Dimension_2D>* gfa = NULL_PTR;
+		new_gerris_file(gfa, dir_ori, group, t);
+		basic_sig(gfa->forest, arg);
+
+		//out_put_basic
+		arrayList arrb(8);
+		arrb[0] = head_x;
+		arrb[1] = tail_x;
+		arrb[2] = max_y;
+		arrb[3] = tail_xc;
+		arrb[4] = u;
+		arrb[5] = v;
+		arrb[6] = x;
+		arrb[7] = y;
+		arrayList arrid(8);
+		arrid.assign_forward(0, 1);
+		drawtofile_gnuplot(  //
+				dir_out + setfilename("_bas_", t, ""), arrid, arrb, 1);
+		//
+
+		//out_put_surface
+		drawtofile_gnuplot(  //
+				dir_out + setfilename("_sur_", t, ""), l_surface, 1);
+		//
+
+		//neck_sig(gfa->forest, arg);
+		//out_put_neck_point
+		//drawtofile_gnuplot(  //
+		//		dir_out + setfilename("_neckp_", t, ""), p_neck, 1);
+		//p_neck.show();
+
+		//
+
+		delete gfa;
+		ic++;
+		cout << "File  ---> ";
+		cout << setw(3) << ic << " " << setw(5) << setprecision(2) << t << "  "
+				<< setw(10) << setprecision(5) << head_x << endl;
+	}
+
+	cout<<"Finish run =====================\n"<<endl;
+}
 void pressure_on_centerline() {
 	const string dir =
 			"/Volumes/Untitled/Taylor_data/Expansion/exp-re100eo100r1.2L4/";

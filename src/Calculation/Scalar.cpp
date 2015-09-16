@@ -2015,7 +2015,7 @@ void pfun_condition_is_on_direction(arrayList& arr, NODE* pn, utPointer utp) {
 	arrayListT<utPointer>& arrutp = (*CAST(arrayListT<utPointer>*, utp));
 	SPDirection& dir = (*(CAST(SPDirection*, arrutp[0])));
 	for (short i = 0; i < NODE::NUM_CELLS; ++i) {
-		arr[i] = (DIRvsNODEIDX[short(dir)][i]==1) ? 1 : 0;
+		arr[i] = (DIRvsNODEIDX[short(dir)][i] == 1) ? 1 : 0;
 	}
 }
 
@@ -2029,6 +2029,54 @@ void _get_leaf_node_list_on_direction(NODE* pn, SPDirection dir,
 			pfun_visit_is_leaf, &arrutp);
 }
 
+int _gradient_center_node_LS( //
+		pQTNode pn,            //pnode
+		arrayList_st& arridx,  //data index
+		arrayList& arrresx,    //data res x
+		arrayList& arrresy     //data res y
+		) {
+	assert(arridx.size() == arrresx.size() && arridx.size() == arrresy.size());
+	// get neigbor node
+	// method1 stencil  get 8 neighbor of P
+	//  n n n
+	//  n p n
+	//  n n n
+	ListT<pQTNode> lpnei;
+	for (int i = 0; i <= 7; ++i) {
+		pQTNode pnei = pn->getNeighborFast(toDirection(i));
+		if (pnei != NULL_PTR) {
+			_get_leaf_node_list_on_direction(pnei,
+					oppositeDirection(toDirection(i)), lpnei);
+		}
+	}
+	Float a1 = 0; // sum_w_dx_dx =0;
+	Float b = 0;  // sum_w_dx_dy =0;
+	Float a2 = 0; // sum_w_dy_dy =0;
+	Point2D pointc = pn->cell->getCenterPoint();
+	arrayList arrc1(arridx.size());
+	arrayList arrc2(arridx.size());
+	for (ListT<pQTNode>::iterator iter = lpnei.begin(); iter != lpnei.end();
+			++iter) {
+		pQTNode pnei = (*iter);
+		Point2D pointcn = pnei->cell->getCenterPoint();
+		Float dx = pointcn.x - pointc.x;
+		Float dy = pointcn.y - pointc.y;
+		Float w = 1 / (dx * dx + dy * dy);
+		a1 += w * dx * dx;
+		b += w * dx * dy;
+		a2 += w * dy * dy;
+		for (arrayList::size_type i = 0; i < arrc1.size(); ++i) {
+			Float dval = getcVal(pnei, arridx[i]) - getcVal(pn, arridx[i]);
+			arrc1[i] += w * dx * dval;
+			arrc2[i] += w * dy * dval;
+		}
+	}
+	// gradient of P
+	for (arrayList::size_type i = 0; i < arridx.size(); ++i) {
+		solve(a1, b, arrc1[i], a2, b, arrc2[i], arrresx[i], arrresy[i]);
+	}
+	return 1;
+}
 int _interpolate_node_LS(  // 2D QuadTree Node Least Square
 		pQTNode pn,            //pnode
 		const Point2D& point,  //point
@@ -2042,9 +2090,6 @@ int _interpolate_node_LS(  // 2D QuadTree Node Least Square
 		return 1;
 	}
 	if (pn->cell->isInOnCell(point)) {
-		// gradient of P
-		arrayList arrgpx(arridx.size());
-		arrayList arrgpy(arridx.size());
 		// get neigbor node
 		// method1 stencil  get 8 neighbor of P
 		//  n n n
@@ -2054,15 +2099,48 @@ int _interpolate_node_LS(  // 2D QuadTree Node Least Square
 		for (int i = 0; i <= 7; ++i) {
 			pQTNode pnei = pn->getNeighborFast(toDirection(i));
 			if (pnei != NULL_PTR) {
-				_get_leaf_node_list_on_direction(pnei, oppositeDirection(toDirection(i)), lpnei);
+				_get_leaf_node_list_on_direction(pnei,
+						oppositeDirection(toDirection(i)), lpnei);
 			}
 		}
 		Float a1 = 0; // sum_w_dx_dx =0;
 		Float b = 0;  // sum_w_dx_dy =0;
 		Float a2 = 0; // sum_w_dy_dy =0;
-
-		// distance -----------------------------
-
+		Point2D pointc = pn->cell->getCenterPoint();
+		arrayList arrc1(arridx.size());
+		arrayList arrc2(arridx.size());
+		for (ListT<pQTNode>::iterator iter = lpnei.begin(); iter != lpnei.end();
+				++iter) {
+			pQTNode pnei = (*iter);
+			Point2D pointcn = pnei->cell->getCenterPoint();
+			Float dx = pointcn.x - pointc.x;
+			Float dy = pointcn.y - pointc.y;
+			Float w = 1 / (dx * dx + dy * dy);
+			a1 += w * dx * dx;
+			b += w * dx * dy;
+			a2 += w * dy * dy;
+			for (arrayList_st::size_type i = 0; i < arridx.size(); ++i) {
+				Float dval = getcVal(pnei, arridx[i]) - getcVal(pn, arridx[i]);
+				arrc1[i] += w * dx * dval;
+				arrc2[i] += w * dy * dval;
+			}
+		}
+		// gradient of P
+		arrayList arrgpx(arridx.size());
+		arrayList arrgpy(arridx.size());
+		for (arrayList_st::size_type i = 0; i < arridx.size(); ++i) {
+			solve(a1, b, arrc1[i], a2, b, arrc2[i], arrgpx[i], arrgpy[i]);
+		}
+		for (ListT<pQTNode>::iterator iter = lpnei.begin(); iter != lpnei.end();
+				++iter) {
+			pQTNode pnei = (*iter);
+			Point2D pointcn = pnei->cell->getCenterPoint();
+			Float dx = pointcn.x - pointc.x;
+			Float dy = pointcn.y - pointc.y;
+			for (arrayList_st::size_type i = 0; i < arridx.size(); ++i) {
+				arrres[i] = arrgpx[i] * dx + arrgpy[i] * dy + getcVal(pn, arridx[i]);
+			}
+		}
 		return 1;
 	} else {
 		std::cerr << " >! Interploate point is not in cell\n";
