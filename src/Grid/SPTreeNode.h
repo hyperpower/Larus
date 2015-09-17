@@ -191,23 +191,23 @@ const SPDirection SP_DIR_OP[26] = //
 		};
 const int SP_DIR_MorP[26] =    //
 		{    //
-		-1,     //SPD_MP = 0,
+		        -1,     //SPD_MP = 0,
 				-1,     //SPD_MM = 1,
-				1,     //SPD_PP = 2,
+				1,      //SPD_PP = 2,
 				-1,     //SPD_PM = 3,
 				-1,     //SPD_IM = 4,
-				1,     //SPD_JP = 5,
-				1,     //SPD_IP = 6,
+				1,      //SPD_JP = 5,
+				1,      //SPD_IP = 6,
 				-1,     //SPD_JM = 7,
-				1,     //SPD_KP = 8,
+				1,      //SPD_KP = 8,
 				-1,     //SPD_KM = 9,
 				-1,     //SPD_MP = 10 + 0,
 				-1,     //SPD_MM = 10 + 1
-				1,     //SPD_PP = 10 + 2,
+				1,      //SPD_PP = 10 + 2,
 				-1,     //SPD_PM = 10 + 3,
 				-1,     //SPD_MP = 14 + 0,
 				-1,     //SPD_MM = 14 + 1,
-				1,     //SPD_PP = 14 + 2,
+				1,      //SPD_PP = 14 + 2,
 				-1,     //SPD_PM = 14 + 3,
 				-1,     //SPD_MMM = 17 + 1,
 				-1,     //SPD_PMM = 17 + 2,
@@ -216,7 +216,7 @@ const int SP_DIR_MorP[26] =    //
 				-1,     //SPD_MMP = 17 + 5,
 				-1,     //SPD_PMP = 17 + 6,
 				-1,     //SPD_MPP = 17 + 7,
-				1,     //SPD_PPP = 17 + 8,
+				1,      //SPD_PPP = 17 + 8,
 		};
 
 const SPNodeIdx SP_NODEIDX[8] = { MPM, MMM, PPM, PMM, MPP, MMP, PPP, PMP };
@@ -1439,6 +1439,11 @@ inline void delete_ghost_node(QTNodeFace& face) {
 	face.pneighbor = NULL_PTR;
 }
 
+template <class NODE>
+inline bool isGhostNode(NODE* pn){
+	ASSERT(pn!=NULL_PTR);
+	return pn->getType() == SPT_ghost;
+}
 //
 template<typename Cell, typename Data, int Dim>
 class SPNodeVertex: public ObjectBase {

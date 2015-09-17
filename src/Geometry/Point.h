@@ -84,7 +84,8 @@ public:
 	}
 	void reconstruct(
 			const TYPE& a,
-			const TYPE& b)
+			const TYPE& b,
+			const TYPE& c=0)
 	{
 		x = a;
 		y = b;

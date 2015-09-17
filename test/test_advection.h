@@ -559,13 +559,24 @@ Float pfun_c(Float x, Float y, Float z) {
 	return (x - 1) * (x - 1) + (y - 1) * (y - 1);
 }
 
+Float pfun_cphi(Float x, Float y, Float z) {
+	Float cx = 0.3;
+	Float cy = 0.3;
+	Float r =  0.2;
+	if ((x - cx) * (x - cx) + (y - cy) * (y - cy) < r * r) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
 void test_advection_adp() {
 	int L = 3;
 	int N = 3;
 	int max_level = 5;
 	Forest2D forest(L, N, 0.0, 0.0, 1, max_level);
 	ListT<Point2D> lp;
-	initial_adaptation_eq(forest, pfun_c, 1, 3, 5);
+	initial_adaptation_le(forest, pfun_c, 1, 3, 5);
 	forest.ConnectTrees();
 	forest.show_info();
 
@@ -637,6 +648,71 @@ void test_advection_adp() {
 
 	//cout << "End of test =========\n";
 }
+
+void test_advection_adp_advance() {
+	int L = 3;
+	int N = 3;
+	int max_level = 6;
+	Forest2D forest(L, N, 0.0, 0.0, 1, max_level);
+	initial_adaptation_le(forest, pfun_c, 1, 3, 5);
+	forest.ConnectTrees();
+	forest.show_info();
+//forest.draw_to_gnuplot_leaf("tree.txt");
+	resize_array_on_center_leaf(forest, 8);
+	set_index_on_center_leaf(forest, Idx_IDX);
+
+	arrayList_st arridx(7);  //data index
+	arridx.assign_forward(1, 1);
+	arrayList arrval(7);     //data plus
+	arrval[0] = 0;      // phi_idx;
+	arrval[1] = 0;      // phi_idx;
+	arrval[2] = 0;      // phi_idx;
+	arrval[3] = 0.005; // dt_idx;
+	arrval[4] = 1;     // u_idx;
+	arrval[5] = 1;     // v_idx;
+	arrval[6] = 0;     // w_idx;
+	plus_scalar_on_leaf( // 2D Forest
+			forest,      // pQuadTree
+			arridx,      // data index
+			arrval       // data plus
+			);
+
+	BCManager<Dimension_2D> bcm(&forest);
+	bcm.new_ghost_nodes();
+
+	Advection_Eq<Dimension_2D> ae(&forest, &bcm, 2, 1, 2, 3, 4, 5, 6);
+	set_scalar_on_leaf_by_function( // 2D Forest
+			forest, //pQuadTree
+			ae.phi_idx, //data index
+			pfun_cphi //data plus
+			);
+//gnuplot_show_as_contour(ae);
+	gnuplot_show_as_surface((*ae.pforest), ae.phi_idx);
+
+	for (int i = 0; i < bcm.pforest->size(); ++i) {
+		pQuadTree pt = bcm.pforest->getpTree_1d(i);
+		if (pt != NULL_PTR) {
+			for (int ii = 4; ii <= 7; ii++) {
+				if (pt->getNeighborpTree(toDirection(ii)) == NULL) {
+					BoundaryCondition<Dimension_2D> bc;
+					bc.direction = toDirection(ii);
+					bc.tree_idx = i;
+					bc.value_idx = ae.phi_idx;
+					bc.pfun = fun_bc_advance;
+					bcm.add_BC(bc);
+				}
+			}
+		}
+	}
+	bcm.set_bc();
+	ae.advance(60);
+//ae.slove(1e-6);
+//gnuplot_show_as_contour(ae);
+	gnuplot_show_as_surface((*ae.pforest), ae.phi_idx);
+
+	cout << "End of test =========\n";
+}
+
 
 }
 

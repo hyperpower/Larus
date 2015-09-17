@@ -129,6 +129,8 @@ public:
 	// first order up wind ------------------
 	int _find_C(pFace, pNode&, Float, BCM*);
 	int _find_C(pFace, pNode&, Float);
+	Float _cal_value_on_neighbor(pNode, SPDirection, pNode, st);
+	//
 	int _face_scheme_boundary_fou(pFace, Expression&);
 	int _face_scheme_equal_fou(pFace, Expression&);
 	int _face_scheme_fine_coarse_fou(pFace, Expression&);
@@ -297,6 +299,58 @@ Float Advection_Eq<DIMENSION>::_face_scheme_tvd(pFace pface, Expression& exp,
 	return pface->face_type;
 }
 
+template<class DIMENSION>
+Float Advection_Eq<DIMENSION>::_cal_value_on_neighbor( //
+		pNode pc,  //
+		SPDirection dir,  //
+		pNode pn,  //
+		st idx  //
+		) {
+	//pn is on the direction of pc
+	// we don't know the type of pn, so we need to analyze it
+	ASSERT(pc!=NULL_PTR);
+	ASSERT(pn!=NULL_PTR);
+	ASSERT((dir >= 4) && (dir <= 9));
+	if ((pc->getLevel() == pn->getLevel() && pn->hasChild() == false)
+			|| isGhostNode(pn)) {
+		//case 1  on the same level
+		return getcVal(pn, idx);
+	}
+	if (pc->getLevel() > pn->getLevel()) {
+		//case 2  neighber is coarse
+		typename DIMENSION::Point p;
+		if (dir == SPD_IM || dir == SPD_IP) {  // x direction
+			Float d = pc->cell->getDx();
+			Float x = pc->cell->getCPX() + (dir == SPD_IP ? d : -d);
+			p.reconstruct(x, pc->cell->getCPY(), pc->cell->getCPZ());
+		} else if (dir == SPD_JM || dir == SPD_JP) { // axis== CSAxis_Y
+			Float d = pc->cell->getDy();
+			Float y = pc->cell->getCPY() + (dir == SPD_JP ? d : -d);
+			p.reconstruct(pc->cell->getCPX(), y, pc->cell->getCPZ());
+		} else {  // axis== CSAxis_Z
+			Float d = pc->cell->getDz();
+			Float z = pc->cell->getCPZ() + (dir == SPD_KP ? d : -d);
+			p.reconstruct(pc->cell->getCPX(), pc->cell->getCPY(), z);
+		}
+		arrayList_st arridx(1);  //data index
+		arridx[0] = idx;
+		arrayList arrres(1);   //data res
+		_interpolate_node_LS(pn, p, arridx, arrres);
+		return arrres[0];
+	}
+	if (pc->getLevel() <= pn->getLevel()) {
+		//case 3  neighber is fine
+		pNode pnf = pn;
+		while (pc->getLevel() < pnf->getLevel()) {
+			pnf = pnf->father;
+			ASSERT(pnf!=NULL_PTR);
+		}
+		return getAverageVal(pnf, idx);
+	}
+	ASSERT(false);
+	return 0.0;    //make complier happy
+}
+
 // This function calculate the phi value on face
 template<class DIMENSION>
 Float Advection_Eq<DIMENSION>::_face_scheme_equal_tvd(pFace pface,
@@ -309,29 +363,29 @@ Float Advection_Eq<DIMENSION>::_face_scheme_equal_tvd(pFace pface,
 	pNode pU = NULL_PTR;
 	pNode pC = NULL_PTR;
 	pNode pD = NULL_PTR;
+	SPDirection dircu = ErrSPDirection;
 	if (isPlus(pface->direction)) {
 		if (veo_f > 0) {
 			pC = pface->pnode;
 			pD = pface->pneighbor;
-			find_neighbor_2(pC, oppositeDirection(pface->direction), pU,
-					(*pBCM));
+			dircu = oppositeDirection(pface->direction);
 		} else {
 			pC = pface->pneighbor;
 			pD = pface->pnode;
-			find_neighbor_2(pC, pface->direction, pU, (*pBCM));
+			dircu = pface->direction;
 		}
 	} else {
 		if (veo_f > 0) {
 			pC = pface->pneighbor;
 			pD = pface->pnode;
-			find_neighbor_2(pC, pface->direction, pU, (*pBCM));
+			dircu = pface->direction;
 		} else {
 			pC = pface->pnode;
 			pD = pface->pneighbor;
-			find_neighbor_2(pC, oppositeDirection(pface->direction), pU,
-					(*pBCM));
+			dircu = oppositeDirection(pface->direction);
 		}
 	}
+	find_neighbor_2(pC, dircu, pU, (*pBCM));
 	//
 	// exp should be empty
 	exp.Insert(ExpTerm(getIDX(pC), pC, 1.0));
@@ -350,8 +404,10 @@ Float Advection_Eq<DIMENSION>::_face_scheme_equal_tvd(pFace pface,
 	//	}
 	//}
 	//--------------------------
+	// Compare U with C
+
 	// cal limiter
-	Float vU = getAverageVal(pU, idx);
+	Float vU = _cal_value_on_neighbor(pC, dircu, pU, idx);
 	Float vC = getcVal(pC, idx);
 	Float vD = getcVal(pD, idx);
 	// cal \Psi(r)
@@ -380,27 +436,30 @@ Float Advection_Eq<DIMENSION>::_face_scheme_boundary_tvd(pFace pface,
 	pNode pU = NULL_PTR;
 	pNode pC = NULL_PTR;
 	pNode pD = NULL_PTR;
+	SPDirection dircu = ErrSPDirection;
 	if (isPlus(pface->direction)) {
 		if (veo_f > 0) {
 			pC = pface->pnode;  //o
 			pD = pBCM->find_ghost(getIDX(pface->pnode), pface->direction);
-			find_neighbor_2(pC, oppositeDirection(pface->direction), pU,
-					(*pBCM));
+			dircu = oppositeDirection(pface->direction);
+			find_neighbor_2(pC, dircu, pU, (*pBCM));
 		} else {
 			pC = pBCM->find_ghost(getIDX(pface->pnode), pface->direction);
 			pD = pface->pnode;
 			pU = pC;
+			dircu = pface->direction;
 		}
 	} else {
 		if (veo_f > 0) {
 			pC = pBCM->find_ghost(getIDX(pface->pnode), pface->direction);
 			pD = pface->pnode;
 			pU = pC;
+			dircu = pface->direction;
 		} else {
 			pC = pface->pnode;
 			pD = pBCM->find_ghost(getIDX(pface->pnode), pface->direction);
-			find_neighbor_2(pC, oppositeDirection(pface->direction), pU,
-					(*pBCM));
+			dircu = oppositeDirection(pface->direction);
+			find_neighbor_2(pC, dircu, pU, (*pBCM));
 		}
 	}
 	// exp should be empty
@@ -408,7 +467,7 @@ Float Advection_Eq<DIMENSION>::_face_scheme_boundary_tvd(pFace pface,
 	// Analyze pU
 	ASSERT(pU!= NULL_PTR);
 	// cal limiter
-	Float vU = getAverageVal(pU, idx);
+	Float vU = _cal_value_on_neighbor(pC, dircu, pU, idx);
 	Float vC = getcVal(pC, phi_idx);
 	Float vD = getcVal(pD, phi_idx);
 	// cal \Psi(r)
@@ -418,7 +477,6 @@ Float Advection_Eq<DIMENSION>::_face_scheme_boundary_tvd(pFace pface,
 	exp.Insert(ExpTerm(ExpTerm::IDX_CONST, NULL_PTR, cor));
 
 	return cor;
-
 }
 
 template<class DIMENSION>
@@ -432,37 +490,38 @@ Float Advection_Eq<DIMENSION>::_face_scheme_fine_coarse_tvd(pFace pface,
 	pNode pU = NULL_PTR;
 	pNode pC = NULL_PTR;
 	pNode pD = NULL_PTR;
+	SPDirection dircu = ErrSPDirection;
 	if (isPlus(pface->direction)) {
 		if (veo_f > 0) {
 			pC = pface->pnode;
 			pD = pface->pneighbor;
-			find_neighbor_2(pC, oppositeDirection(pface->direction), pU,
-					(*pBCM));
+			dircu = oppositeDirection(pface->direction);
 		} else {
 			pC = pface->pneighbor;
 			pD = pface->pnode;
-			find_neighbor_2(pC, pface->direction, pU, (*pBCM));
+			dircu = pface->direction;
 		}
 	} else {
 		if (veo_f > 0) {
 			pC = pface->pneighbor;
 			pD = pface->pnode;
-			find_neighbor_2(pC, pface->direction, pU, (*pBCM));
+			dircu = pface->direction;
+
 		} else {
 			pC = pface->pnode;
 			pD = pface->pneighbor;
-			find_neighbor_2(pC, oppositeDirection(pface->direction), pU,
-					(*pBCM));
+			dircu = oppositeDirection(pface->direction);
 		}
 	}
+	find_neighbor_2(pC, dircu, pU, (*pBCM));
 	//
 	// exp should be empty
 	exp.Insert(ExpTerm(getIDX(pC), pC, 1.0));
 
 	// cal limiter
-	Float vU = getAverageVal(pU, idx);
-	Float vC = getcVal(pC, idx);
-	Float vD = getcVal(pD, idx);
+	Float vU = _cal_value_on_neighbor(pC, dircu, pU, idx);
+	Float vC = getAverageVal(pC, idx);
+	Float vD = _cal_value_on_neighbor(pC, oppositeDirection(dircu), pD, idx);
 	// cal \Psi(r)
 	Float r = (vC - vU) / (vD - vC + SMALL);
 	Float psi = limiter(r, scheme_idx);
@@ -471,7 +530,6 @@ Float Advection_Eq<DIMENSION>::_face_scheme_fine_coarse_tvd(pFace pface,
 
 	return cor;
 }
-
 
 template<class DIMENSION>
 int Advection_Eq<DIMENSION>::_node_exp_adv_t(pNode pn, Float dt,

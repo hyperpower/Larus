@@ -156,6 +156,8 @@ void drawtofile_vtu(std::string filename, Segment3D& t) {
 	fs.close();
 }
 
+#ifndef __APPLE__
+
 int vtk_show(const Segment3D& seg) {
 	//
 	//Segment3D seg(Point3D(1.0, 0.0, 0.0), Point3D(0.0, 1.0, 0.0));
@@ -200,6 +202,7 @@ int vtk_show(const Segment3D& seg) {
 
 	return EXIT_SUCCESS;
 }
-
+#endif
 }
+
 
