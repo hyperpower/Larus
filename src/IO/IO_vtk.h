@@ -17,6 +17,9 @@
 
 #include "../Geometry/Triangle.h"
 
+
+
+
 namespace Larus {
 
 void vtk_unstructured_grid_head(FILE*& data, std::string intru);
@@ -34,6 +37,10 @@ void drawtofile_vtk(std::string filename, ListT<Point3D>&);
 void drawtofile_vtu(std::string filename, Segment3D&);
 
 void drawtofile_vtu(std::ofstream& fs, ListT<Point3D>&);
+/*
+ * This part is based on vtk library > 5.8
+ */
+int vtk_show(const Segment3D& seg);
 
 }
 

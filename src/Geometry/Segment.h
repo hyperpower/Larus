@@ -36,6 +36,7 @@ private:
 	Line calLine(const Point_2D<TYPE> &, const Point_2D<TYPE> &) const;
 	Float calLength(const Point_2D<TYPE> &a, const Point_2D<TYPE> &b) const;
 public:
+	typedef TYPE value_type;
 	typedef Point_2D<TYPE> value_type_point;
 	typedef Point_2D<TYPE>& reference_point;
 	typedef const Point_2D<TYPE>& const_reference_point;
@@ -431,6 +432,7 @@ class Segment_3D: public array_2<Point_3D<TYPE> >
 private:
 	Float calLength(const Point_3D<TYPE> &a, const Point_3D<TYPE> &b) const;
 public:
+	typedef TYPE value_type;
 	typedef Point_3D<TYPE> value_type_point;
 	typedef Point_3D<TYPE>& reference_point;
 	typedef const Point_3D<TYPE>& const_reference_point;

@@ -7,6 +7,26 @@
 
 #include "IO_vtk.h"
 #include "IO.h"
+
+#include <vtkVersion.h>
+#include <vtkSmartPointer.h>
+#include <vtkTetra.h>
+#include <vtkCellArray.h>
+#include <vtkXMLUnstructuredGridReader.h>
+#include <vtkDataSetMapper.h>
+#include <vtkActor.h>
+#include <vtkRenderer.h>
+#include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkXMLUnstructuredGridWriter.h>
+#include <vtkUnstructuredGrid.h>
+#include <vtkPointData.h>
+#include <vtkVertexGlyphFilter.h>
+#include <vtkLineSource.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkProperty.h>
+#include <vtkAxesActor.h>
+
 using namespace std;
 namespace Larus {
 
@@ -134,6 +154,51 @@ void drawtofile_vtu(std::string filename, Segment3D& t) {
 	fs << "</Piece>";
 	vtu_unstructured_grid_file_end(fs);
 	fs.close();
+}
+
+int vtk_show(const Segment3D& seg) {
+	//
+	//Segment3D seg(Point3D(1.0, 0.0, 0.0), Point3D(0.0, 1.0, 0.0));
+	// Create two points, P0 and P1
+	double p0[3] = { seg[0][0], seg[0][1], seg[0][2] };
+	double p1[3] = { seg[1][0], seg[1][1], seg[1][2] };
+
+	vtkSmartPointer<vtkLineSource> lineSource =
+			vtkSmartPointer<vtkLineSource>::New();
+	lineSource->SetPoint1(p0);
+	lineSource->SetPoint2(p1);
+	lineSource->Update();
+
+	// Visualize ------------------------------------------
+	vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<
+			vtkPolyDataMapper>::New();
+	mapper->SetInputConnection(lineSource->GetOutputPort());
+	vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
+	actor->SetMapper(mapper);
+	//
+	actor->GetProperty()->SetLineWidth(2);
+
+	vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
+	vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<
+			vtkRenderWindow>::New();
+	renderWindow->AddRenderer(renderer);
+	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor =
+			vtkSmartPointer<vtkRenderWindowInteractor>::New();
+	renderWindowInteractor->SetRenderWindow(renderWindow);
+
+	renderer->AddActor(actor);
+	renderer->SetBackground(.1,.2,.3); // Background dark blue
+	vtkSmartPointer<vtkAxesActor> axes =
+	    vtkSmartPointer<vtkAxesActor>::New();
+	actor->GetProperty()->SetLineWidth(5);
+	std::cout<< " ConeRadius " << axes->GetConeRadius()<<endl;
+	renderer->AddActor(axes);
+
+
+	renderWindow->Render();
+	renderWindowInteractor->Start();
+
+	return EXIT_SUCCESS;
 }
 
 }
