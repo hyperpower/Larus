@@ -16,23 +16,22 @@
 
 //#define _OPENMP_
 #ifdef _OPENMP_
-
 #define OPENMP_Num_Threads 4
 #endif
-namespace LarusDef {
 
+namespace LarusDef {
 const double PI = 3.141592653589793238;
 typedef int size_type;
 }
 
 namespace Larus {
 
-#define _USE_SIMD_
 
 #define NULL_PTR (NULL)
 #define ASSERT(expr) assert(expr)
 #define ASSERT_MSG(expr, msg) assert((expr)&&(msg))
-#define CAST(type, p)      ((type)p)
+#define CAST(type, p)          ((type)p)
+#define CAST_REF(type, p)      (*((type)p))
 #define _IF_TRUE_RETRUN(expr)  if(expr){return;};
 #define _IF_FALSE_RETRUN(expr)  if(false==(expr)){return;};
 
@@ -96,8 +95,20 @@ inline TYPE ABS(TYPE a) {
 	return (a <= 0.0) ? -a : a;
 }
 
-bool isEqual(Float a, Float b);
-bool isZero(Float a);
+inline bool isEqual(Float a,Float b){
+	if(ABS(a-b)<=SMALL){
+		return true;
+	}else{
+		return false;
+	}
+}
+inline bool isZero(Float a){
+	if(ABS(a)<SMALL){
+		return true;
+	}else{
+		return false;
+	}
+}
 
 Float get_wall_time();
 
