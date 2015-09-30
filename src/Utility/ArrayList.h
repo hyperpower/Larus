@@ -541,8 +541,8 @@ public:
 
 	//other functions==============================
 	TYPE sum() const;
-	TYPE findMin() const;
-	TYPE findMax() const;
+	TYPE min() const;
+	TYPE max() const;
 	size_type findMinIdx() const;
 	size_type findMaxIdx() const;
 	//fill ----------------------------------------
@@ -669,7 +669,7 @@ TYPE arrayListV<TYPE>::sum() const
 	return sum;
 }
 template<typename TYPE>
-TYPE arrayListV<TYPE>::findMin() const
+TYPE arrayListV<TYPE>::min() const
 {
 	assert(this->m_p!=NULL);
 	TYPE min = this->m_p[0];
@@ -681,7 +681,7 @@ TYPE arrayListV<TYPE>::findMin() const
 	return min;
 }
 template<typename TYPE>
-TYPE arrayListV<TYPE>::findMax() const
+TYPE arrayListV<TYPE>::max() const
 {
 	assert(this->m_p!=NULL);
 	TYPE max = this->m_p[0];
