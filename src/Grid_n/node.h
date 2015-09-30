@@ -243,6 +243,30 @@ public:
 			this->child[0]->father = this;
 		}
 	}
+
+	inline bool is_adjacent(const Direction& d) const{
+		// Direction on x y or z
+		size_t hi = d >> 3;
+		return (hi&_idx)^(hi&d)==0;
+	}
+	inline size_t reflect(const Direction& d) const{
+		// Direction on x y or z
+		return _idx^(d>>3);
+	}
+	inline bool has_diagonal_sibling(const Direction& d) const{
+		return (_idx^(d>>3)) == (d&7);
+	}
+	inline bool is_out_corner(const Direction& d) const{
+		return _idx == (d&7);
+	}
+	inline size_t out_common_direction(const Direction& d) const{
+		// return direction on x y or z
+		size_t hi  = d >> 3;
+		size_t low = d & 7;
+		return (((low^_idx)^hi) << 3) + low;
+	}
+
+
 };
 
 }
