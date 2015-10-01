@@ -40,7 +40,7 @@ Float calDiscreteErrorLinf(const arrayList &ao, const arrayList &ap) {
 	for (int i = 0; i < n; i++) {
 		aabs[i] = ABS(ap[i] - ao[i]);
 	}
-	return aabs.findMax();
+	return aabs.max();
 }
 
 

@@ -155,6 +155,9 @@ protected:
 		}
 	}
 public:
+	/*
+	 *  constructor
+	 */
 	Node(pnode f, int nt, size_t level, size_t idx, //
 			const value_t& x, const value_t& dhx, //
 			const value_t& y = 0.0, const value_t& dhy = 0.0, //
@@ -173,7 +176,42 @@ public:
 			neighbor[i] = NULL_PTR;
 		}
 	}
-	~Node();
+	/*
+	 *  delete
+	 */
+protected:
+	/*
+	 *  before using this function, making sure that this node is a leaf
+	 */
+	void _delete_leaf() {
+		pnode f = this->father;
+		if (f != NULL_PTR) {
+			f->child[_idx] = NULL_PTR;
+		}
+		delete cell;
+		if (data != NULL_PTR) {
+			delete data;
+		}
+	}
+	void _delete(pnode pn) {
+		if (pn == NULL_PTR) {
+			return;
+		}
+		if (pn->has_child()) {
+			for (int i = 0; i < NumChildren; i++) {
+				pnode ch = pn->child[i];
+				if (ch != NULL_PTR) {
+					_delete(ch);
+				}
+			}
+		} else { // is leaf
+			pn->_delete_leaf();
+		}
+	}
+public:
+	~Node() {
+		_delete(this);
+	}
 	/*
 	 * type
 	 */
@@ -204,9 +242,20 @@ public:
 		}
 		return false;
 	}
+	inline bool is_leaf() const {
+		return !has_child();
+	}
 	inline bool has_child(size_t idx) const {
 		return this->child[idx] != NULL_PTR;
 	}
+	inline bool is_root() const {
+		if (this->father == NULL_PTR) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
 	inline bool is_full_child() const {
 		bool res = this->child[0] != NULL_PTR;
 		for (size_t i = 1; i < this->NumChildren; ++i) {
@@ -243,29 +292,30 @@ public:
 			this->child[0]->father = this;
 		}
 	}
-
-	inline bool is_adjacent(const Direction& d) const{
+	/*
+	 *  neighbor find
+	 */
+	inline bool is_adjacent(const Direction& d) const {
 		// Direction on x y or z
 		size_t hi = d >> 3;
-		return (hi&_idx)^(hi&d)==0;
+		return (hi & _idx) ^ (hi & d) == 0;
 	}
-	inline size_t reflect(const Direction& d) const{
+	inline size_t reflect(const Direction& d) const {
 		// Direction on x y or z
-		return _idx^(d>>3);
+		return _idx ^ (d >> 3);
 	}
-	inline bool has_diagonal_sibling(const Direction& d) const{
-		return (_idx^(d>>3)) == (d&7);
+	inline bool has_diagonal_sibling(const Direction& d) const {
+		return (_idx ^ (d >> 3)) == (d & 7);
 	}
-	inline bool is_out_corner(const Direction& d) const{
-		return _idx == (d&7);
+	inline bool is_out_corner(const Direction& d) const {
+		return _idx == (d & 7);
 	}
-	inline size_t out_common_direction(const Direction& d) const{
+	inline size_t out_common_direction(const Direction& d) const {
 		// return direction on x y or z
-		size_t hi  = d >> 3;
+		size_t hi = d >> 3;
 		size_t low = d & 7;
-		return (((low^_idx)^hi) << 3) + low;
+		return (((low ^ _idx) ^ hi) << 3) + low;
 	}
-
 
 };
 

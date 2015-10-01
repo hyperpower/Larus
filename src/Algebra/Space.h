@@ -11,16 +11,20 @@
 #include <iostream>
 #include <assert.h>
 #include "../TypeDef.h"
+#include "../Utility/Array.h"
 #include "../Utility/ArrayList.h"
 
 namespace Larus {
 
-template<typename TYPE, LarusDef::size_type Dim>
+template<typename TYPE, LarusDef::size_type DIM>
 class SpaceT {
 public:
+	static const size_t Dim = DIM;
 	// type definitions===================
-	typedef TYPE value_type;
+	typedef TYPE value_t;
 	typedef TYPE* pointer;
+	typedef SpaceT<value_t, Dim>  self;
+	typedef SpaceT<value_t, Dim>* pself;
 	typedef const TYPE* const_pointer;
 	typedef TYPE& reference;
 	typedef const TYPE& const_reference;
@@ -29,16 +33,16 @@ public:
 	//static const int DIM = Dim;
 private:
 	array<size_type, Dim> m_len;
-	arrayListT<TYPE> m_mp;
+	arrayListT<value_t> m_mp;
 public:
 	//constructor==========================
 	SpaceT();
-	SpaceT(const SpaceT<TYPE, Dim>& a);
+	SpaceT(const self& a);
 	SpaceT(size_type iLen, size_type = 0, size_type = 0);
 
 	void reconstruct(size_type iLen, size_type = 0, size_type = 0);
 	//=============================================
-	SpaceT<TYPE, Dim>& operator=(const SpaceT<TYPE, Dim>& a);
+	SpaceT<TYPE, DIM>& operator=(const SpaceT<TYPE, DIM>& a);
 	//=============================================
 	~SpaceT() {
 	}
@@ -60,8 +64,6 @@ public:
 		return m_mp.empty();
 	}
 	//Element access===============================
-	//arrayListT<TYPE>& operator[](size_type index);
-	//const arrayListT<TYPE>& operator[](size_type index) const;
 	size_type to_1d_idx(size_type i, size_type = 0, size_type = 0) const;
 
 	reference operator()(size_type i, size_type = 0, size_type = 0);
@@ -139,8 +141,8 @@ void SpaceT<TYPE, Dim>::reconstruct(size_type iLen, size_type jLen,
 		this->m_mp.reconstruct(iLen * jLen * kLen);
 	}
 }
-template<typename TYPE, LarusDef::size_type Dim>
-SpaceT<TYPE, Dim>& SpaceT<TYPE, Dim>::operator=(const SpaceT<TYPE, Dim>& a) {
+template<typename TYPE, LarusDef::size_type DIM>
+SpaceT<TYPE, DIM>& SpaceT<TYPE, DIM>::operator=(const SpaceT<TYPE, DIM>& a) {
 	if (this == &a) {
 		return *this;
 	}
@@ -148,11 +150,11 @@ SpaceT<TYPE, Dim>& SpaceT<TYPE, Dim>::operator=(const SpaceT<TYPE, Dim>& a) {
 	this->m_mp = a.m_mp;
 	return *this;
 }
-template<typename TYPE, LarusDef::size_type Dim>
-typename SpaceT<TYPE, Dim>::size_type SpaceT<TYPE, Dim>::to_1d_idx(SpaceT<TYPE, Dim>::size_type i,
-		SpaceT<TYPE, Dim>::size_type j, SpaceT<TYPE, Dim>::size_type k) const {
+template<typename TYPE, LarusDef::size_type DIM>
+typename SpaceT<TYPE, DIM>::size_type SpaceT<TYPE, DIM>::to_1d_idx(SpaceT<TYPE, DIM>::size_type i,
+		SpaceT<TYPE, DIM>::size_type j, SpaceT<TYPE, DIM>::size_type k) const {
 	ASSERT(i < this->m_len[0]);
-	if (Dim >= 2)
+	if (DIM >= 2)
 		ASSERT(j < this->m_len[1]);
 	if (Dim >= 3)
 		ASSERT(k < this->m_len[2]);
@@ -173,55 +175,55 @@ typename SpaceT<TYPE, Dim>::size_type SpaceT<TYPE, Dim>::to_1d_idx(SpaceT<TYPE, 
 	return idx;
 }
 
-template<typename TYPE, LarusDef::size_type Dim>
-TYPE& SpaceT<TYPE, Dim>::at(SpaceT<TYPE, Dim>::size_type i,
-		SpaceT<TYPE, Dim>::size_type j, SpaceT<TYPE, Dim>::size_type k) {
+template<typename TYPE, LarusDef::size_type DIM>
+TYPE& SpaceT<TYPE, DIM>::at(SpaceT<TYPE, DIM>::size_type i,
+		SpaceT<TYPE, DIM>::size_type j, SpaceT<TYPE, DIM>::size_type k) {
 	size_type idx = to_1d_idx(i,j,k);
 	return m_mp[idx];
 }
-template<typename TYPE, LarusDef::size_type Dim>
-const TYPE& SpaceT<TYPE, Dim>::at(SpaceT<TYPE, Dim>::size_type i,
-		SpaceT<TYPE, Dim>::size_type j, SpaceT<TYPE, Dim>::size_type k) const {
+template<typename TYPE, LarusDef::size_type DIM>
+const TYPE& SpaceT<TYPE, DIM>::at(SpaceT<TYPE, DIM>::size_type i,
+		SpaceT<TYPE, DIM>::size_type j, SpaceT<TYPE, DIM>::size_type k) const {
 	size_type idx = to_1d_idx(i,j,k);
 	return m_mp[idx];
 }
-template<typename TYPE, LarusDef::size_type Dim>
-typename SpaceT<TYPE, Dim>::reference SpaceT<TYPE, Dim>::at_1d(
-		SpaceT<TYPE, Dim>::size_type i) {
+template<typename TYPE, LarusDef::size_type DIM>
+typename SpaceT<TYPE, DIM>::reference SpaceT<TYPE, DIM>::at_1d(
+		SpaceT<TYPE, DIM>::size_type i) {
 	return m_mp[i];
 }
-template<typename TYPE, LarusDef::size_type Dim>
-typename SpaceT<TYPE, Dim>::const_reference SpaceT<TYPE, Dim>::at_1d(
-		SpaceT<TYPE, Dim>::size_type i) const {
+template<typename TYPE, LarusDef::size_type DIM>
+typename SpaceT<TYPE, DIM>::const_reference SpaceT<TYPE, DIM>::at_1d(
+		SpaceT<TYPE, DIM>::size_type i) const {
 	return m_mp[i];
 }
-template<typename TYPE, LarusDef::size_type Dim>
-TYPE& SpaceT<TYPE, Dim>::operator()(SpaceT<TYPE, Dim>::size_type i,
-		SpaceT<TYPE, Dim>::size_type j, SpaceT<TYPE, Dim>::size_type k) {
+template<typename TYPE, LarusDef::size_type DIM>
+TYPE& SpaceT<TYPE, DIM>::operator()(SpaceT<TYPE, DIM>::size_type i,
+		SpaceT<TYPE, DIM>::size_type j, SpaceT<TYPE, DIM>::size_type k) {
 	return at(i, j, k);
 }
-template<typename TYPE, LarusDef::size_type Dim>
-const TYPE& SpaceT<TYPE, Dim>::operator()(SpaceT<TYPE, Dim>::size_type i,
-		SpaceT<TYPE, Dim>::size_type j, SpaceT<TYPE, Dim>::size_type k) const {
+template<typename TYPE, LarusDef::size_type DIM>
+const TYPE& SpaceT<TYPE, DIM>::operator()(SpaceT<TYPE, DIM>::size_type i,
+		SpaceT<TYPE, DIM>::size_type j, SpaceT<TYPE, DIM>::size_type k) const {
 	return at(i, j, k);
 }
-template<typename TYPE, LarusDef::size_type Dim>
-TYPE SpaceT<TYPE, Dim>::get(SpaceT<TYPE, Dim>::size_type i,
-		SpaceT<TYPE, Dim>::size_type j, SpaceT<TYPE, Dim>::size_type k) {
+template<typename TYPE, LarusDef::size_type DIM>
+TYPE SpaceT<TYPE, DIM>::get(SpaceT<TYPE, DIM>::size_type i,
+		SpaceT<TYPE, DIM>::size_type j, SpaceT<TYPE, DIM>::size_type k) {
 	return at(i, j, k);
 }
-template<typename TYPE, LarusDef::size_type Dim>
-void SpaceT<TYPE, Dim>::set(const TYPE& value, SpaceT<TYPE, Dim>::size_type i,
-		SpaceT<TYPE, Dim>::size_type j, SpaceT<TYPE, Dim>::size_type k) {
+template<typename TYPE, LarusDef::size_type DIM>
+void SpaceT<TYPE, DIM>::set(const TYPE& value, SpaceT<TYPE, DIM>::size_type i,
+		SpaceT<TYPE, DIM>::size_type j, SpaceT<TYPE, DIM>::size_type k) {
 	this->at(i, j, k) = value;
 }
-template<typename TYPE, LarusDef::size_type Dim>
-void SpaceT<TYPE, Dim>::assign(const TYPE& value) {
+template<typename TYPE, LarusDef::size_type DIM>
+void SpaceT<TYPE, DIM>::assign(const TYPE& value) {
 	m_mp.assign(value);
 }
-template<typename TYPE, LarusDef::size_type Dim>
-TYPE* SpaceT<TYPE, Dim>::getpValue(SpaceT<TYPE, Dim>::size_type i,
-		SpaceT<TYPE, Dim>::size_type j, SpaceT<TYPE, Dim>::size_type k) {
+template<typename TYPE, LarusDef::size_type DIM>
+TYPE* SpaceT<TYPE, DIM>::getpValue(SpaceT<TYPE, DIM>::size_type i,
+		SpaceT<TYPE, DIM>::size_type j, SpaceT<TYPE, DIM>::size_type k) {
 	return &at(i, j, k);
 }
 
