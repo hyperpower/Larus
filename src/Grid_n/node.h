@@ -4,6 +4,8 @@
 #include "../TypeDef.h"
 #include "grid_def.h"
 
+#include <math.h>
+
 namespace Larus {
 namespace Grid {
 
@@ -98,7 +100,8 @@ public:
 protected:
 	int _node_type;
 	size_t _level;
-	size_t _idx;
+	size_t _root_idx;
+	size_t _path;
 public:
 	pnode father;
 	pnode child[NumChildren];
@@ -158,7 +161,7 @@ public:
 	/*
 	 *  constructor
 	 */
-	Node(pnode f, int nt, size_t level, size_t idx, //
+	Node(pnode f, int nt, size_t level, size_t root_idx, size_t path,	//
 			const value_t& x, const value_t& dhx, //
 			const value_t& y = 0.0, const value_t& dhy = 0.0, //
 			const value_t& z = 0.0, const value_t& dhz = 0.0) {
@@ -166,7 +169,8 @@ public:
 		_level = level;
 		cell = new cell_t(x, dhx, y, dhy, z, dhz);
 		father = f;
-		_idx = idx;
+		_root_idx = root_idx;
+		_path = path;
 
 		data = NULL_PTR;
 		for (int i = 0; i < this->NumChildren; i++) {
@@ -186,7 +190,7 @@ protected:
 	void _delete_leaf() {
 		pnode f = this->father;
 		if (f != NULL_PTR) {
-			f->child[_idx] = NULL_PTR;
+			f->child[get_idx()] = NULL_PTR;
 		}
 		delete cell;
 		if (data != NULL_PTR) {
@@ -226,7 +230,13 @@ public:
 		return _level;
 	}
 	inline size_t get_idx() const {
-		return _idx;
+		return (_path >> int(pow(Dim, _level))) & (NumVertexes - 1);
+	}
+	inline size_t get_path() const {
+		return _path;
+	}
+	inline size_t get_root_idx() const {
+		return _root_idx;
 	}
 	inline size_t height() const {
 		return this->_height(this);
@@ -283,13 +293,17 @@ public:
 			value_t cy = this->cell->get(_C_, _Y_);
 			value_t cz = this->cell->get(_C_, _Z_);
 			for (size_t i = 0; i < this->NumChildren; ++i) {
-				this->child[0] = new node( //
-						this, 1, ltmp, i, //
+				pnode f = this;
+				int nt = 1;
+				size_t l = ltmp;
+				size_t ridx = _root_idx;
+				size_t npath = (i << int((pow(Dim, l)))) + _path;
+				this->child[i] = new node( //
+						f, nt, l, ridx, npath, //
 						cx + (is_x_p(i) ? nhdx : -nhdx), nhdx, //
 						cy + (is_y_p(i) ? nhdx : -nhdx), nhdy, //
 						cz + (is_z_p(i) ? nhdx : -nhdx), nhdz);
 			}
-			this->child[0]->father = this;
 		}
 	}
 	/*
@@ -298,23 +312,23 @@ public:
 	inline bool is_adjacent(const Direction& d) const {
 		// Direction on x y or z
 		size_t hi = d >> 3;
-		return (hi & _idx) ^ (hi & d) == 0;
+		return (hi & get_idx()) ^ (hi & d) == 0;
 	}
 	inline size_t reflect(const Direction& d) const {
 		// Direction on x y or z
-		return _idx ^ (d >> 3);
+		return get_idx() ^ (d >> 3);
 	}
 	inline bool has_diagonal_sibling(const Direction& d) const {
-		return (_idx ^ (d >> 3)) == (d & 7);
+		return (get_idx() ^ (d >> 3)) == (d & 7);
 	}
 	inline bool is_out_corner(const Direction& d) const {
-		return _idx == (d & 7);
+		return get_idx() == (d & 7);
 	}
 	inline size_t out_common_direction(const Direction& d) const {
 		// return direction on x y or z
 		size_t hi = d >> 3;
 		size_t low = d & 7;
-		return (((low ^ _idx) ^ hi) << 3) + low;
+		return (((low ^ get_idx()) ^ hi) << 3) + low;
 	}
 
 };

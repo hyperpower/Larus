@@ -96,6 +96,9 @@ enum Axes {
 	_Z_ = 2, //
 };
 
+//default type
+typedef double CooValueType;
+typedef double ValueType;
 
 
 }

@@ -56,25 +56,28 @@ public:
 	 *  get
 	 */
 	inline value_t get(const Orientation& ori, const Axes& axes) const {
-		value_t xv = 0.0;
+		value_t res = 0.0;
+		if(axes>=Dim){
+			return 0.0;
+		}
 		switch (ori) {
 		case _M_: {
-			xv = _center[axes] - _hd[axes];
+			res = _center[axes] - _hd[axes];
 			break;
 		}
 		case _C_: {
-			xv = _center[axes];
+			res = _center[axes];
 			break;
 		}
 		case _P_: {
-			xv = _center[axes] + _hd[axes];
+			res = _center[axes] + _hd[axes];
 			break;
 		}
 		default: {
 			break;
 		}
 		}
-		return xv;
+		return res;
 	}
 
 	inline value_t get_d(const Axes& axes) const {
@@ -96,6 +99,8 @@ public:
 		fun(this, utp);
 	}
 };
+
+
 
 }
 }
