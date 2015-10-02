@@ -156,7 +156,7 @@ void drawtofile_vtu(std::string filename, Segment3D& t) {
 	fs.close();
 }
 
-#ifndef __APPLE__
+//#ifndef __APPLE__
 
 int vtk_show(const Segment3D& seg) {
 	//
@@ -199,10 +199,16 @@ int vtk_show(const Segment3D& seg) {
 
 	renderWindow->Render();
 	renderWindowInteractor->Start();
-
+	//vtkPolyDataMapper
 	return EXIT_SUCCESS;
 }
-#endif
+
+int _vtk_show(){
+	Segment3D seg(0.0, 0.0,0.0,1.0,2.0,3.0);
+	vtk_show(seg);
+	return 1;
+}
+//#endif
 }
 
 

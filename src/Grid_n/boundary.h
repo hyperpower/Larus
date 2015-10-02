@@ -9,22 +9,34 @@
 
 namespace Larus {
 namespace Grid {
+struct GhostID;
 
-
+template<typename COO_VALUE, typename VALUE, int DIM>
+typedef int (*pFun_boundary_condition)(
+ 	Node<COO_VALUE, VALUE, DIM>* pnode,
+ 	GhostID& ghostid,
+ 	utPointer utp
+			);
 
 struct GhostID {
-	int node_idx;  //the global idx of the origin node
+	size_t root_idx;  //the global idx of the origin node
+	size_t path;
 	size_t step;   //the steps of ghost node, we can choose multiple ghost node,
 				   // usually step = 0
 	Direction direction; //The direction only on x, y or z
+	pFun_boundary_condition pfun;
 };
+
+
 
 struct GhostID_compare {
 	bool operator()(const GhostID& lhs,
 			const GhostID& rhs) const {
-		if (lhs.node_idx < rhs.node_idx) {
+		if (lhs.root_idx < rhs.root_idx) {
 			return true;
-		} else if (lhs.node_idx == rhs.node_idx) {
+		} else if (lhs.root_idx == rhs.root_idx) {
+			return lhs.path < rhs.path
+		} else if (lhs.path == rhs.path){
 			return int(lhs.direction) < int(rhs.direction);
 		} else if (lhs.direction == rhs.direction) {
 			return lhs.step < rhs.step;
@@ -57,6 +69,8 @@ public:
 	typedef Node<COO_VALUE, VALUE, DIM>* pnode;
 	typedef void (*pfunction)(pnode, utPointer);
 	typedef void (*pfunction_conditional)(arrayList&, pnode, utPointer);
+
+
 
 };
 

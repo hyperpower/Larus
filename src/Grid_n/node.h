@@ -333,6 +333,14 @@ public:
 
 };
 
+	/*
+	 *  functions out of class
+	 */
+template <template<typename COO_VALUE, typename VALUE, int DIM>
+int get_data_idx(const Node<COO_VALUE, VALUE, DIM>* pn){
+	ASSERT(pn!=NULL_PTR);
+	return pn->data->get_idx();
 }
+}//
 }
 #endif /* NODE_H_ */

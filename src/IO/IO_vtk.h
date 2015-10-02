@@ -40,6 +40,7 @@ void drawtofile_vtu(std::ofstream& fs, ListT<Point3D>&);
 /*
  * This part is based on vtk library > 5.8
  */
+int _vtk_show();
 int vtk_show(const Segment3D& seg);
 
 }

@@ -96,6 +96,32 @@ enum Axes {
 	_Z_ = 2, //
 };
 
+static const short COUNT_1[8] = {
+	0,1,1,2,1,2,2,3
+}
+
+inline bool is_face_direction(const Direction& d){
+	return COUNT_1[(d>>3)]==1;
+}
+inline bool is_face_p_direction(const Direction& d){
+	short hi = d>>3;
+	short low = d&7;
+	return (COUNT_1[hi]==1) && (hi&low)!=0;
+}
+inline bool is_xy_direction(const Direction& d){
+	return (d>>3)==3;
+}
+inline bool is_yz_direction(const Direction& d){
+	return (d>>3)==6;
+}
+inline bool is_zx_direction(const Direction& d){
+	return (d>>3)==5;
+}
+inline bool is_xyz_direction(const Direction& d){
+	return (d>>3)==7;
+}
+
+
 //default type
 typedef double CooValueType;
 typedef double ValueType;

@@ -20,6 +20,7 @@ public:
 	typedef void (*pfunction)(self*, utPointer);
 
 protected:
+	int _idx;
 	arrayListV<value_t> _center;
 	arrayListV<value_t> _face[NumFaces];
 	arrayListV<value_t> _vertex[NumVertexes];
@@ -30,6 +31,7 @@ public:
 	}
 	Data(const size_t& nc, const size_t& nf, const size_t& nv, utPointer utp) :
 			_center(nc) {
+		_idx = 0;
 		for (int i = 0; i < NumFaces; ++i) {
 			_face[i].reconstruct(nf);
 		}
@@ -38,6 +40,37 @@ public:
 		}
 		untype = utp;
 	}
+
+	inline value_t& center(size_t i){
+		ASSERT(i<_center.size());
+		return _center[i];
+	}
+
+	inline const value_t& center(size_t i) const{
+		ASSERT(i<_center.size());
+		return _center[i];
+	}
+
+	inline value_t& face(Direction d, size_t i){
+		ASSERT(i<_face.size());
+		return _face[i];
+	}
+
+	inline const value_t& face(Direction d, size_t i) const{
+		ASSERT(i<_face.size());
+		return _face[i];
+	}
+
+	inline value_t& vertex(Direction d, size_t i){
+		ASSERT(i<_vertex.size());
+		return _vertex[i];
+	}
+
+	inline const value_t& vertex(Direction d, size_t i) const{
+		ASSERT(i<_vertex.size());
+		return _vertex[i];
+	}
+
 
 	bool is_empty() const {
 		bool res = true;
