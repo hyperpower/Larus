@@ -80,26 +80,26 @@ public:
 	/*
 	 *  size
 	 */
-	inline size_t i_len() const {
+	inline size_t iLen() const {
 		return nodes.iLen();
 	}
-	inline size_t j_len() const {
+	inline size_t jLen() const {
 		return nodes.jLen();
 	}
-	inline size_t k_len() const {
+	inline size_t kLen() const {
 		return (Dim < 3) ? 0 : nodes.kLen();
 	}
-	inline bool is_empty() const {
+	inline bool Empty() const {
 		if (nodes.size() <= 0) {
 			return true;
 		} else {
 			return false;
 		}
 	}
-	size_t get_dim() const {
+	size_t GetDim() const {
 		return Dim;
 	}
-	size_t size() const {
+	size_t Size() const {
 		return nodes.size();
 	}
 

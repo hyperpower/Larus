@@ -142,11 +142,11 @@ public:
 	void resize(size_type new_size);
 
 	bool empty() const;
-	bool non_Empty() const;
+	bool non_empty() const;
 	inline bool check_idx(size_type) const;
 
-	bool has(const TYPE& nd) const;       //overload ==
-	size_type find(const TYPE& nd) const; //overload ==
+	bool has(const TYPE& nd) const;              //overload ==
+	size_type find(const TYPE& nd) const;        //overload ==
 	size_type count_equal(const TYPE& nd) const; //overload ==
 };
 
@@ -491,7 +491,7 @@ bool arrayListT<TYPE>::empty() const
 }
 
 template<typename TYPE>
-bool arrayListT<TYPE>::non_Empty() const
+bool arrayListT<TYPE>::non_empty() const
 {
 	return !empty();
 }

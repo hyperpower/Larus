@@ -1,4 +1,5 @@
 #include "../src/Grid/Grid"
+#include "../src/Utility/hashmap.h"
 
 using namespace Larus::Grid;
 
@@ -24,7 +25,17 @@ inline void test_show_grid() {
 			3, 0, 1);
 	//
 	vtk_show(g);
+}
 
 
-
+inline void test_hashmap(){
+	Larus::HashMap<double, double> hm;
+	for(int i = 0; i<10; ++i){
+		hm.Insert(i, 500+i);
+	}
+	for(auto iter=hm.begin(); iter!=hm.end(); ++iter){
+		std::cout<< (*iter) <<"\n";
+	}
+	std::cout<< hm<<"\n";
+	std::cout<< hm.Get(1) <<"\n";
 }

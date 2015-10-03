@@ -27,6 +27,7 @@ protected:
 	utPointer untype;
 public:
 	Data() {
+		_idx = 0;
 		untype = NULL_PTR;
 	}
 	Data(const size_t& nc, const size_t& nf, const size_t& nv, utPointer utp) :
@@ -41,38 +42,38 @@ public:
 		untype = utp;
 	}
 
-	inline value_t& center(size_t i){
+	inline value_t& Center(size_t i){
 		ASSERT(i<_center.size());
 		return _center[i];
 	}
 
-	inline const value_t& center(size_t i) const{
+	inline const value_t& Center(size_t i) const{
 		ASSERT(i<_center.size());
 		return _center[i];
 	}
 
-	inline value_t& face(Direction d, size_t i){
+	inline value_t& Face(Direction d, size_t i){
 		ASSERT(i<_face.size());
 		return _face[i];
 	}
 
-	inline const value_t& face(Direction d, size_t i) const{
+	inline const value_t& Face(Direction d, size_t i) const{
 		ASSERT(i<_face.size());
 		return _face[i];
 	}
 
-	inline value_t& vertex(Direction d, size_t i){
+	inline value_t& Vertex(Direction d, size_t i){
 		ASSERT(i<_vertex.size());
 		return _vertex[i];
 	}
 
-	inline const value_t& vertex(Direction d, size_t i) const{
+	inline const value_t& Vertex(Direction d, size_t i) const{
 		ASSERT(i<_vertex.size());
 		return _vertex[i];
 	}
 
 
-	bool is_empty() const {
+	bool Empty() const {
 		bool res = true;
 		res = res && (_center.size() == 0);
 		for (int i = 0; i < NumFaces; ++i) {
@@ -84,7 +85,7 @@ public:
 		return res;
 	}
 
-	void show_info() const {
+	void ShowInfo() const {
 		std::cout << "center data:" << this->_center.size() << "\n";
 		std::cout << "face data   :" << "\n";
 		for (int i = 0; i < NumFaces; ++i) {

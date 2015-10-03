@@ -22,42 +22,33 @@ public:
 	ListNode* next;
 	TYPE node;
 
-	ListNode();
-	ListNode(const TYPE&);
-	ListNode(const ListNode<TYPE>&);
-	ListNode<TYPE>& operator=(const ListNode<TYPE>&);
-};
-
-template<typename TYPE>
-ListNode<TYPE>::ListNode() :
-		node() {
-	prev = NULL;
-	next = NULL;
-}
-template<typename TYPE>
-ListNode<TYPE>::ListNode(const TYPE& _x) :
-		node(_x) {
-	prev = NULL;
-	next = NULL;
-}
-
-template<typename TYPE>
-ListNode<TYPE>::ListNode(const ListNode<TYPE>& _x) {
-	prev = _x.prev;
-	next = _x.next;
-	node = _x.node;
-}
-template<typename TYPE>
-ListNode<TYPE>& ListNode<TYPE>::operator=(const ListNode<TYPE>& _x) {
-	if (this == &_x) {
-		return *this;
-	} else {
+	ListNode() :
+			node() {
+		prev = NULL;
+		next = NULL;
+	}
+	ListNode(const TYPE& _x) :
+			node(_x) {
+		prev = NULL;
+		next = NULL;
+	}
+	ListNode(const ListNode<TYPE>& _x) {
 		prev = _x.prev;
 		next = _x.next;
 		node = _x.node;
-		return *this;
 	}
-}
+	ListNode<TYPE>& operator=(const ListNode<TYPE>& _x) {
+		if (this == &_x) {
+			return *this;
+		} else {
+			prev = _x.prev;
+			next = _x.next;
+			node = _x.node;
+			return *this;
+		}
+	}
+};
+
 
 template<class _Tp, class _Ref, class _Ptr>
 class _List_iterator {
@@ -204,7 +195,7 @@ ListT<TYPE>::ListT(const ListT<TYPE>& a) {
 	if (a.size() == 0) {
 		return;
 	} else {
-		for (const_iterator iter=a.begin(); iter != a.end(); iter++) {
+		for (const_iterator iter = a.begin(); iter != a.end(); iter++) {
 			this->push_back(iter._ptr->node);
 		}
 	}
@@ -219,7 +210,7 @@ ListT<TYPE>& ListT<TYPE>::operator=(const ListT<TYPE>& a) {
 		if (a.count == 0) {
 			return *this;
 		} else {
-			for (const_iterator iter=a.begin(); iter != a.end(); iter++) {
+			for (const_iterator iter = a.begin(); iter != a.end(); iter++) {
 				this->push_back(iter._ptr->node);
 			}
 		}

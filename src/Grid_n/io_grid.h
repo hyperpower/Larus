@@ -77,9 +77,9 @@ void _vtkUnstructuredGrid_add_node(
 	vtkIdType n = points->GetNumberOfPoints();
 
 	for (size_t i = 0; i < pn->NumVertexes; ++i) {
-		vt x = pn->cell->get(vtk_VOXEL[i][0], _X_);
-		vt y = (node_t::Dim >= 2) ? pn->cell->get(vtk_VOXEL[i][1], _Y_) : 0.0;
-		vt z = (node_t::Dim == 3) ? pn->cell->get(vtk_VOXEL[i][2], _Z_) : 0.0;
+		vt x = pn->cell->Get(vtk_VOXEL[i][0], _X_);
+		vt y = (node_t::Dim >= 2) ? pn->cell->Get(vtk_VOXEL[i][1], _Y_) : 0.0;
+		vt z = (node_t::Dim == 3) ? pn->cell->Get(vtk_VOXEL[i][2], _Z_) : 0.0;
 		points->InsertNextPoint(x, y, z);
 	}
 

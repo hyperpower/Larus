@@ -86,55 +86,59 @@ public:
 
 	typedef COO_VALUE coo_value_t;
 	typedef VALUE value_t;
-	typedef Node<COO_VALUE, VALUE, DIM> self;
-	typedef Node<COO_VALUE, VALUE, DIM>* pself;
-	typedef Cell<COO_VALUE, Dim> cell_t;
-	typedef cell_t* pcell;
-	typedef Data<VALUE, Dim> data_t;
-	typedef data_t* pdata;
-	typedef self node;
-	typedef self* pnode;
-	typedef void (*pfunction)(pnode, utPointer);
-	typedef void (*pfunction_conditional)(arrayList&, pnode, utPointer);
+	typedef Node<COO_VALUE, VALUE, DIM> Self;
+	typedef Node<COO_VALUE, VALUE, DIM>* pSelf;
+	typedef Cell<COO_VALUE, Dim> Cell_;
+	typedef Cell_* pCell;
+	typedef Data<VALUE, Dim> Data_;
+	typedef Data_* pData;
+	typedef Self Node_;
+	typedef Self* pNode;
+	typedef void (*pFun)(pNode, utPointer);
+	typedef void (*pFun_Conditional)(arrayList&, pNode, utPointer);
 
 protected:
+	typedef size_t st;
+	typedef COO_VALUE cvt;
+	typedef VALUE vt;
+	//
 	int _node_type;
-	size_t _level;
-	size_t _root_idx;
-	size_t _path;
+	st _level;
+	st _root_idx;
+	st _path;
 public:
-	pnode father;
-	pnode child[NumChildren];
-	pnode neighbor[NumNeighbors];
-	pcell cell;
-	pdata data;
+	pNode father;
+	pNode child[NumChildren];
+	pNode neighbor[NumNeighbors];
+	pCell cell;
+	pData data;
 
 protected:
-	int _height(const pnode Current) const {
+	int _height(const pNode Current) const {
 		if (Current == NULL_PTR) {
 			return 0;
 		}
-		if (!Current->has_child()) {
+		if (!Current->HasChild()) {
 			return 0;
 		} else {
-			arrayListV<size_t> arrh(NumChildren);
-			for (size_t i = 0; i < this->NumChildren; ++i) {
+			arrayListV<st> arrh(NumChildren);
+			for (st i = 0; i < this->NumChildren; ++i) {
 				arrh = _height(Current->child[i]);
 			}
 			return 1 + arrh.max();
 		}
 	}
-	void _traversal_conditional(pnode pn, pfunction_conditional pfun_con,
-			pfunction pfun, utPointer utp) {
+	void _traversal_conditional(pNode pn, pFun_Conditional pfun_con,
+			pFun pfun, utPointer utp) {
 		if (pn == NULL_PTR) {
 			return;
 		} else {
 			(*pfun)(pn, utp);
-			if (pn->has_child()) {
+			if (pn->HasChild()) {
 				arrayList avt(NumChildren);
 				pfun_con(avt, pn, utp);
 				for (int i = 0; i < NumChildren; i++) {
-					pnode c = pn->child[i];
+					pNode c = pn->child[i];
 					if (c != NULL_PTR && avt[i] == 1) {
 						_traversal_conditional(c, pfun_con, pfun, utp);
 					}
@@ -142,14 +146,14 @@ protected:
 			}
 		}
 	}
-	void _traversal(pnode pn, pfunction pfun, utPointer utp) {
+	void _traversal(pNode pn, pFun pfun, utPointer utp) {
 		if (pn == NULL_PTR) {
 			return;
 		} else {
 			(*pfun)(pn, utp);
-			if (pn->has_child()) {
+			if (pn->HasChild()) {
 				for (int i = 0; i < NumChildren; i++) {
-					pnode c = pn->child[i];
+					pNode c = pn->child[i];
 					if (c != NULL_PTR) {
 						_traversal(c, pfun, utp);
 					}
@@ -161,13 +165,13 @@ public:
 	/*
 	 *  constructor
 	 */
-	Node(pnode f, int nt, size_t level, size_t root_idx, size_t path,	//
-			const value_t& x, const value_t& dhx, //
-			const value_t& y = 0.0, const value_t& dhy = 0.0, //
-			const value_t& z = 0.0, const value_t& dhz = 0.0) {
+	Node(pNode f, int nt, st level, st root_idx, st path,	//
+			const vt& x, const vt& dhx, //
+			const vt& y = 0.0, const vt& dhy = 0.0, //
+			const vt& z = 0.0, const vt& dhz = 0.0) {
 		_node_type = nt;
 		_level = level;
-		cell = new cell_t(x, dhx, y, dhy, z, dhz);
+		cell = new Cell_(x, dhx, y, dhy, z, dhz);
 		father = f;
 		_root_idx = root_idx;
 		_path = path;
@@ -187,78 +191,78 @@ protected:
 	/*
 	 *  before using this function, making sure that this node is a leaf
 	 */
-	void _delete_leaf() {
-		pnode f = this->father;
+	void _DeleteLeaf() {
+		pNode f = this->father;
 		if (f != NULL_PTR) {
-			f->child[get_idx()] = NULL_PTR;
+			f->child[GetIdx()] = NULL_PTR;
 		}
 		delete cell;
 		if (data != NULL_PTR) {
 			delete data;
 		}
 	}
-	void _delete(pnode pn) {
+	void _Delete(pNode pn) {
 		if (pn == NULL_PTR) {
 			return;
 		}
-		if (pn->has_child()) {
+		if (pn->HasChild()) {
 			for (int i = 0; i < NumChildren; i++) {
-				pnode ch = pn->child[i];
+				pNode ch = pn->child[i];
 				if (ch != NULL_PTR) {
-					_delete(ch);
+					_Delete(ch);
 				}
 			}
 		} else { // is leaf
-			pn->_delete_leaf();
+			pn->_DeleteLeaf();
 		}
 	}
 public:
 	~Node() {
-		_delete(this);
+		_Delete(this);
 	}
 	/*
 	 * type
 	 */
-	inline int get_type() const {
+	inline int GetType() const {
 		return _node_type;
 	}
-	inline void set_type(int type) {
+	inline void SetType(int type) {
 		_node_type = type;
 	}
 
-	inline size_t get_level() const {
+	inline st GetLevel() const {
 		return _level;
 	}
-	inline size_t get_idx() const {
+	inline st GetIdx() const {
 		return (_path >> int(pow(Dim, _level))) & (NumVertexes - 1);
 	}
-	inline size_t get_path() const {
+	inline st GetPath() const {
 		return _path;
 	}
-	inline size_t get_root_idx() const {
+	inline st GetRootIdx() const {
 		return _root_idx;
 	}
-	inline size_t height() const {
+	inline st Height() const {
 		return this->_height(this);
 	}
 	/*
 	 *  child
 	 */
-	inline bool has_child() const {
-		for (size_t i = 0; i < this->NumChildren; ++i) {
+	inline bool HasChild() const {
+		for (st i = 0; i < this->NumChildren; ++i) {
 			if (this->child[i] != NULL_PTR) {
 				return true;
 			}
 		}
 		return false;
 	}
-	inline bool is_leaf() const {
-		return !has_child();
+	inline bool IsLeaf() const {
+		return !HasChild();
 	}
-	inline bool has_child(size_t idx) const {
+	inline bool HasChild(st idx) const {
 		return this->child[idx] != NULL_PTR;
 	}
-	inline bool is_root() const {
+	inline bool IsRoot() const {
 		if (this->father == NULL_PTR) {
 			return true;
 		} else {
@@ -266,16 +270,16 @@ public:
 		}
 	}
 
-	inline bool is_full_child() const {
+	inline bool IsFullChild() const {
 		bool res = this->child[0] != NULL_PTR;
-		for (size_t i = 1; i < this->NumChildren; ++i) {
+		for (st i = 1; i < this->NumChildren; ++i) {
 			res = res && (this->child[i] != NULL_PTR);
 		}
 		return res;
 	}
-	inline size_t count_child() const {
-		size_t res = 0;
-		for (size_t i = 0; i < this->NumChildren; ++i) {
+	inline st CountChild() const {
+		st res = 0;
+		for (st i = 0; i < this->NumChildren; ++i) {
 			res += (this->child[i] != NULL_PTR) ? 1 : 0;
 		}
 		return res;
@@ -283,22 +287,22 @@ public:
 	/*
 	 *  new
 	 */
-	void new_full_child() {
-		if (!has_child()) {
-			size_t ltmp = _level + 1;
-			value_t nhdx = this->cell->get_hd(_X_) * 0.5;
-			value_t nhdy = this->cell->get_hd(_Y_) * 0.5;
-			value_t nhdz = this->cell->get_hd(_Z_) * 0.5;
-			value_t cx = this->cell->get(_C_, _X_);
-			value_t cy = this->cell->get(_C_, _Y_);
-			value_t cz = this->cell->get(_C_, _Z_);
-			for (size_t i = 0; i < this->NumChildren; ++i) {
-				pnode f = this;
+	void NewFullChild() {
+		if (!HasChild()) {
+			st ltmp = _level + 1;
+			vt nhdx = this->cell->get_hd(_X_) * 0.5;
+			vt nhdy = this->cell->get_hd(_Y_) * 0.5;
+			vt nhdz = this->cell->get_hd(_Z_) * 0.5;
+			vt cx = this->cell->get(_C_, _X_);
+			vt cy = this->cell->get(_C_, _Y_);
+			vt cz = this->cell->get(_C_, _Z_);
+			for (st i = 0; i < this->NumChildren; ++i) {
+				pNode f = this;
 				int nt = 1;
-				size_t l = ltmp;
-				size_t ridx = _root_idx;
-				size_t npath = (i << int((pow(Dim, l)))) + _path;
-				this->child[i] = new node( //
+				st l = ltmp;
+				st ridx = _root_idx;
+				st npath = (i << int((pow(Dim, l)))) + _path;
+				this->child[i] = new Node_( //
 						f, nt, l, ridx, npath, //
 						cx + (is_x_p(i) ? nhdx : -nhdx), nhdx, //
 						cy + (is_y_p(i) ? nhdx : -nhdx), nhdy, //
@@ -309,26 +313,26 @@ public:
 	/*
 	 *  neighbor find
 	 */
-	inline bool is_adjacent(const Direction& d) const {
+	inline bool IsAdjacent(const Direction& d) const {
 		// Direction on x y or z
-		size_t hi = d >> 3;
-		return (hi & get_idx()) ^ (hi & d) == 0;
+		st hi = d >> 3;
+		return (hi & GetIdx()) ^ (hi & d) == 0;
 	}
-	inline size_t reflect(const Direction& d) const {
+	inline st Reflect(const Direction& d) const {
 		// Direction on x y or z
-		return get_idx() ^ (d >> 3);
+		return GetIdx() ^ (d >> 3);
 	}
-	inline bool has_diagonal_sibling(const Direction& d) const {
-		return (get_idx() ^ (d >> 3)) == (d & 7);
+	inline bool HasDiagonalSibling(const Direction& d) const {
+		return (GetIdx() ^ (d >> 3)) == (d & 7);
 	}
-	inline bool is_out_corner(const Direction& d) const {
-		return get_idx() == (d & 7);
+	inline bool IsOutCorner(const Direction& d) const {
+		return GetIdx() == (d & 7);
 	}
-	inline size_t out_common_direction(const Direction& d) const {
+	inline st OutCommonDirection(const Direction& d) const {
 		// return direction on x y or z
-		size_t hi = d >> 3;
-		size_t low = d & 7;
-		return (((low ^ get_idx()) ^ hi) << 3) + low;
+		st hi = d >> 3;
+		st low = d & 7;
+		return (((low ^ GetIdx()) ^ hi) << 3) + low;
 	}
 
 };
@@ -336,8 +340,8 @@ public:
 	/*
 	 *  functions out of class
 	 */
-template <template<typename COO_VALUE, typename VALUE, int DIM>
-int get_data_idx(const Node<COO_VALUE, VALUE, DIM>* pn){
+template <typename COO_VALUE, typename VALUE, int DIM>
+int GetDataIdx(const Node<COO_VALUE, VALUE, DIM>* pn){
 	ASSERT(pn!=NULL_PTR);
 	return pn->data->get_idx();
 }

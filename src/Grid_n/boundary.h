@@ -6,37 +6,35 @@
 #include "node.h"
 #include "cell.h"
 
-
 namespace Larus {
 namespace Grid {
-struct GhostID;
+
 
 template<typename COO_VALUE, typename VALUE, int DIM>
-typedef int (*pFun_boundary_condition)(
- 	Node<COO_VALUE, VALUE, DIM>* pnode,
- 	GhostID& ghostid,
- 	utPointer utp
-			);
-
 struct GhostID {
+	typedef int (*pFun_set_bc)(Node<COO_VALUE, VALUE, DIM>*,
+				GhostID<COO_VALUE, VALUE, DIM>&, utPointer);
+
 	size_t root_idx;  //the global idx of the origin node
 	size_t path;
 	size_t step;   //the steps of ghost node, we can choose multiple ghost node,
 				   // usually step = 0
 	Direction direction; //The direction only on x, y or z
-	pFun_boundary_condition pfun;
+
+	int bc_type;
+	pFun_set_bc pfun_bc;
 };
 
-
-
+template<typename COO_VALUE, typename VALUE, int DIM>
 struct GhostID_compare {
-	bool operator()(const GhostID& lhs,
-			const GhostID& rhs) const {
+	typedef GhostID<COO_VALUE, VALUE, DIM> Gid;
+	bool operator()(const Gid& lhs,
+			const Gid& rhs) const {
 		if (lhs.root_idx < rhs.root_idx) {
 			return true;
 		} else if (lhs.root_idx == rhs.root_idx) {
-			return lhs.path < rhs.path
-		} else if (lhs.path == rhs.path){
+			return lhs.path < rhs.path;
+		} else if (lhs.path == rhs.path) {
 			return int(lhs.direction) < int(rhs.direction);
 		} else if (lhs.direction == rhs.direction) {
 			return lhs.step < rhs.step;
@@ -70,10 +68,7 @@ public:
 	typedef void (*pfunction)(pnode, utPointer);
 	typedef void (*pfunction_conditional)(arrayList&, pnode, utPointer);
 
-
-
 };
-
 
 }
 }
