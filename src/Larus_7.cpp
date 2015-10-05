@@ -54,7 +54,7 @@ int main() {
 	//test_sp1();
 	//show_opencl_info();
 	//vector_dot();
-	_vtk_show();
+	test_initial_film();
 	cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
 	return 0;
 }

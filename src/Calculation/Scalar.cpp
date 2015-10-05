@@ -303,7 +303,7 @@ void visit_set_const_on_center_leaf_array(NODE* node, utPointer pt) {
 }
 void set_const_on_center_leaf(pOCTree oct, arrayList& arr,
 		LarusDef::size_type idx_bt) {
-	if (arr.non_Empty()) {
+	if (arr.non_empty()) {
 		arrayListT<utPointer> a(2);
 		a[0] = &arr;
 		a[1] = &idx_bt;

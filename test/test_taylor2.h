@@ -45,7 +45,7 @@ const string workdir_taylor =
 const string strDIR = "";
 #else
 const string strDIR =
-"/home/czhou/Gerris/Taylor_data/Expansion/exp-re31eo100r1.4L4/";
+		"/home/czhou/Gerris/Taylor_data/Expansion/exp-re31eo100r1.4L4/";
 #endif
 
 void cal_surface(GerrisFileAdp<Dimension_2D>& gfa, ListT<Segment2D>& list) {
@@ -186,12 +186,6 @@ void get_center_of_bubble(ListT<pQTNode>& listpn, Float& x, Float& y) {
 	}
 	x = sumveox / area;
 	y = sumveoy / area;
-}
-
-void save_list_seg(const ListT<Segment2D>& ls, string filename) {
-	Matrix m(ls.size() * 2, 2);
-	int i = 0;
-
 }
 
 string setfilename(string prefix, int group, Float i, string end) {
@@ -560,7 +554,7 @@ void run_test() {
 	drawtofile_gnuplot(dir_outg + "line_sig_1.3.txt", listsig, 1);
 	generate_solid_sig(listsig, 0.5, 0.20, -0.25, sigx, 15);
 	drawtofile_gnuplot(dir_outg + "line_sig_1.4.txt", listsig, 1);
-	cout<<"Finish run =====================\n"<<endl;
+	cout << "Finish run =====================\n" << endl;
 }
 void run_test_contraction() {
 	string dir = "/home/czhou/Gerris/Taylor_data/Contraction/re135eo150r0.90L4/";
@@ -649,7 +643,7 @@ void run_test_contraction() {
 				<< setw(10) << setprecision(5) << head_x << endl;
 	}
 
-	cout<<"Finish run =====================\n"<<endl;
+	cout << "Finish run =====================\n" << endl;
 }
 void pressure_on_centerline() {
 	const string dir =
@@ -822,7 +816,7 @@ void pressure_contour_line() {
 		cout << "tail x " << tail_x << endl;
 		//draw pressure con============
 		draw_gnuplot_as_contour(	// 2D QuadTree
-				dir_out + setfilename("_pcon_", time, ""),//filename
+				dir_out + setfilename("_pcon_", time, ""),	//filename
 				gfa->forest,	//tree
 				1,	//mode
 				Gerris_P	//idx x
@@ -838,8 +832,75 @@ void pressure_contour_line() {
 		ListT<pQTNode> lnode;
 		getListpNode_leaf_center_data_in_range(lnode, gfa->forest, Gerris_T, 0,
 				1, Range_oc);
-		draw_gnuplot_as_contour_line(dir_out + setfilename("_pconl_", time, ""), lnode, 1, Gerris_P,
-				alevel);
+		draw_gnuplot_as_contour_line(dir_out + setfilename("_pconl_", time, ""),
+				lnode, 1, Gerris_P, alevel);
+		delete gfa;
+	}
+}
+
+void ffr_straight_velocity() {
+	const string dir = "/home/czhou/Gerris/Taylor/FFR/analyze/";
+	string dir_ori = dir + "ori/";
+	string dir_out = dir + "out_each_c/";
+	ListT<Float> listfilm;
+
+	int group = 6;
+	Float t_str = 0;
+	Float t_end = 30;
+	Float dt = 0.2;
+
+	//loop ------------------------
+	for (Float time = t_str; time <= t_end; time += dt) {
+		//new forest ------------------
+		//Float time =10.0;
+		GerrisFileAdp<Dimension_2D>* gfa = NULL_PTR;
+		string filename = get_gerrisfilename(group, time);
+		string strss = dir_ori + filename;
+		Point2D op(-0.25, 0.0);  //intial point
+		int lmin = 4;            //level min
+		int lmax = 7;            //level MAX
+		Float boxl = 0.5;        //box lenght
+		gfa = new GerrisFileAdp<Dimension_2D>(strss, lmin, lmax, op, boxl);
+		gfa->forest.ConnectTrees();
+		cout << "time  " << time << " \n";
+		//gfa->forest.show_info();
+		cout << "Finsh load tree =====       \n\n";
+		//
+		ListT<pQTNode> listpn;
+		getListpNode_leaf_center_data_in_range(listpn, gfa->forest, Gerris_T,
+				0.0, 1.0, Range_co);
+		//out velocity
+		ListT<pQTNode> listpn_inlet;
+		getListpNode_leaf_on_line( // 2D Forest
+				listpn_inlet,           //as output
+				gfa->forest,                  // Forest
+				0.24, CSAxis_X);
+		Float sum = 0;
+		for (auto iter = listpn_inlet.begin(); iter != listpn_inlet.end();
+				iter++) {
+			sum += (*iter)->data->aCenterData[Gerris_U];
+		}
+		Float utrans = sum / listpn_inlet.size();
+		//shift velocity ==============
+		arrayList_st arridx(1);
+		arridx[0] = Gerris_U;
+		arrayList arrval(1);
+		arrval[0] = -utrans;
+		plus_scalar_on_leaf(	// 2D Forest
+				gfa->forest,	//pQuadTree
+				arridx,	//data index
+				arrval	//data plus
+				);
+		//
+
+		//get bubble velocity=======================
+		Float v = 0;
+		Float u = 0;
+		get_bubble_velocity(listpn, u, v);
+		Float x = 0;
+		Float y = 0;
+		get_center_of_bubble(listpn, x, y);
+		cout << " u = " << u << "  v = " << v << " utrans = "<< -utrans <<endl;
 		delete gfa;
 	}
 }
