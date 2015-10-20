@@ -159,7 +159,7 @@ inline Float getAverageVal(NODE* pn, LarusDef::size_type idx) {
 		pn->Traversal(visit_average_value_from_leafs_1, &arrp);
 		res /= count;
 	}
-
+	return 0.0;
 }
 
 //work with Forest===============================

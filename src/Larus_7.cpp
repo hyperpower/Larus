@@ -54,7 +54,7 @@ int main() {
 	//test_sp1();
 	//show_opencl_info();
 	//vector_dot();
-	test_case_order();
+	test_initial_film();
 	cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
 	return 0;
 }

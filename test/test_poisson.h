@@ -321,7 +321,7 @@ void test_poissons_1_adp(int level, Float& norm1, Float& norm2, Float& normi) {
 	int max_level = level;
 	Forest2D forest(L, N, -0.5, -0.5, 0.5, max_level);
 	ListT<Point2D> lp;
-	initial_adaptation_le(forest, pfun_circle, 0.09, level - 2, level);
+	initial_adaptation_le(forest, pfun_circle, 0.09, level - 1, level);
 	forest.ConnectTrees();
 	//forest.show_info();
 	//forest.show();

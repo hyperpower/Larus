@@ -56,6 +56,12 @@ void Pair<T, V>::reconstruct(const T& t, const V& v) {
 	this->second = v;
 }
 
+/// Returns a pair object with (a,b)
+template<typename T1, typename T2>
+inline Pair<T1, T2> makePair(const T1& a, const T2& b) {
+	return (Pair<T1, T2>(a, b));
+}
+
 }
 
 #endif

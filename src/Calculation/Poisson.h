@@ -21,8 +21,8 @@
 namespace Larus {
 //This file use to solve poisson equation
 //
-//   ▽•(bata(x,y)  ▽phi(x,y)  ) = f(x,y)     2D --version
-//   ▽•(bata(x,y,z)▽phi(x,y,z)) = f(x,y,z)   3D --version
+//   ▽•(beta(x,y)  ▽phi(x,y)  ) = f(x,y)     2D --version
+//   ▽•(beta(x,y,z)▽phi(x,y,z)) = f(x,y,z)   3D --version
 
 template<class DIMENSION>
 class Poisson_Eq: public ObjectBase {

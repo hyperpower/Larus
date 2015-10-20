@@ -99,8 +99,8 @@ void test_initial_film() {
 
 	Float g = 1;
 
-	Float moset = 4.31E-002;
-	Float nfset = 111;
+	Float moset = 225;
+	Float nfset = 183.7117307087;
 
 	int bi = 0;
 	int be = 1;
@@ -183,8 +183,8 @@ void test_initial_film() {
 		asita[i] = x1 / frg.D;
 		asita2[i] = x12 / frg2.D;
 
-		cout << "sita/D  = " << asita[i] << endl;
-		cout << "sita/D 2= " << asita2[i] << endl;
+		cout << "sita/D v = " << asita[i] << endl;
+		cout << "sita/D w = " << asita2[i] << endl;
 	}
 }
 

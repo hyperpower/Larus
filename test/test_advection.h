@@ -603,7 +603,7 @@ void test_advection_adp() {
 	BCManager<Dimension_2D> bcm(&forest);
 	bcm.new_ghost_nodes();
 
-	Advection_Eq<Dimension_2D> ae(&forest, &bcm, 1, 1, 2, 3, 4, 5, 6);
+	Advection_Eq<Dimension_2D> ae(&forest, &bcm, 2, 1, 2, 3, 4, 5, 6);
 	set_scalar_on_leaf_by_function( // 2D Forest
 			forest,        //pQuadTree
 			ae.phi_idx,    //data index
