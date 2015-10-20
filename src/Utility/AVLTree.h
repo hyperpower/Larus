@@ -34,7 +34,7 @@ public:
 
 template<typename ND>
 void AVLTree<ND>::_insert(pTreeNode &Current, const ND &data) {
-	if (Current == NULL) { //如果节点为空,就在此节点处加入x信息
+	if (Current == NULL_PTR) { //如果节点为空,就在此节点处加入x信息
 		Current = new BinaryTreeNode<ND>(data);
 	} else if (data < Current->m_value) { //如果x小于节点的值,就继续在节点的左子树中插入x
 		_insert(Current->lchild, data);
@@ -68,13 +68,13 @@ void AVLTree<ND>::Insert(const ND &x) {
 
 template<typename ND>
 void AVLTree<ND>::_delete(pTreeNode &Current, const ND &data) {
-	if (Current == NULL) {
+	if (Current == NULL_PTR) {
 		return;	    //没有找到值是x的节点
 	}
 	if (data < Current->m_value) {
 		_delete(Current->lchild, data);	    //如果x小于节点的值,就继续在节点的左子树中删除x
 		if (2 == (_height(Current->rchild) - _height(Current->lchild))) {
-			if (Current->rchild->lchild != NULL
+			if (Current->rchild->lchild != NULL_PTR
 					&& (_height(Current->rchild->lchild)
 							> _height(Current->rchild->rchild))) {
 				_doubrotateRL(Current);
@@ -87,7 +87,7 @@ void AVLTree<ND>::_delete(pTreeNode &Current, const ND &data) {
 	else if (data > Current->m_value) {
 		_delete(Current->rchild, data);	    //如果x大于节点的值,就继续在节点的右子树中删除x
 		if (2 == (_height(Current->lchild) - _height(Current->rchild))) {
-			if (Current->lchild->rchild != NULL
+			if (Current->lchild->rchild != NULL_PTR
 					&& (_height(Current->lchild->rchild)
 							> _height(Current->lchild->lchild))) {
 				_doubrotateLR(Current);
@@ -101,7 +101,7 @@ void AVLTree<ND>::_delete(pTreeNode &Current, const ND &data) {
 	{
 		if (Current->lchild && Current->rchild) {    //此节点有两个儿子
 			BinaryTreeNode<ND>* temp = Current->rchild;	    //temp指向节点的右儿子
-			while (temp->lchild != NULL) {
+			while (temp->lchild != NULL_PTR) {
 				temp = temp->lchild;  //找到右子树中值最小的节点
 			}
 			//把右子树中最小节点的值赋值给本节点
@@ -109,7 +109,7 @@ void AVLTree<ND>::_delete(pTreeNode &Current, const ND &data) {
 			//Current->freq = temp->freq;
 			_delete(Current->rchild, temp->m_value);	          //删除右子树中最小值的节点
 			if (2 == _height(Current->lchild) - _height(Current->rchild)) {
-				if (Current->lchild->rchild != NULL
+				if (Current->lchild->rchild != NULL_PTR
 						&& (_height(Current->lchild->rchild)
 								> _height(Current->lchild->lchild))) {
 					_doubrotateLR(Current);
@@ -120,20 +120,20 @@ void AVLTree<ND>::_delete(pTreeNode &Current, const ND &data) {
 		} else	            //此节点有1个或0个儿子
 		{
 			BinaryTreeNode<ND>* temp = Current;
-			if (Current->lchild == NULL) {	            //有右儿子或者没有儿子
-				if (Current->rchild != NULL)
+			if (Current->lchild == NULL_PTR) {	            //有右儿子或者没有儿子
+				if (Current->rchild != NULL_PTR)
 					Current->rchild->father = Current->father;
 				Current = Current->rchild;
-			} else if (Current->rchild == NULL) {	            //有左儿子
-				if (Current->lchild != NULL)
+			} else if (Current->rchild == NULL_PTR) {	            //有左儿子
+				if (Current->lchild != NULL_PTR)
 					Current->lchild->father = Current->father;
 				Current = Current->lchild;
 			}
 			delete (temp);
-			temp = NULL;
+			temp = NULL_PTR;
 		}
 	}
-	if (Current == NULL)
+	if (Current == NULL_PTR)
 		return;
 	//Current->hgt = Max(height(Current->lchild), height(Current->rchild)) + 1;
 	//return;

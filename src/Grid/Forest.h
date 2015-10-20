@@ -791,10 +791,10 @@ void Forest<DIM_TYPE>::show() const {
 		arry[i + 1] = iter->PEY();
 		i += 2;
 	}
-	Float maxx = arrx.findMax();
-	Float maxy = arry.findMax();
-	Float minx = arrx.findMin();
-	Float miny = arry.findMin();
+	Float maxx = arrx.max();
+	Float maxy = arry.max();
+	Float minx = arrx.min();
+	Float miny = arry.min();
 	gp.set_equal_ratio();
 	for (st i = 0; i < fm.size(); ++i) {
 		if (att.at_1d(i) == ATT_ENABLE) {

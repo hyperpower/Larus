@@ -12,21 +12,9 @@
 #include <time.h>
 
 namespace Larus{
-bool isEqual(Float a,Float b){
-	if(ABS(a-b)<=SMALL){
-		return true;
-	}else{
-		return false;
-	}
-}
 
-bool isZero(Float a){
-	if(ABS(a)<SMALL){
-		return true;
-	}else{
-		return false;
-	}
-}
+
+
 
 double get_wall_time(){
     struct timeval time;

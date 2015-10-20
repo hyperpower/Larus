@@ -142,11 +142,11 @@ public:
 	void resize(size_type new_size);
 
 	bool empty() const;
-	bool non_Empty() const;
+	bool non_empty() const;
 	inline bool check_idx(size_type) const;
 
-	bool has(const TYPE& nd) const;       //overload ==
-	size_type find(const TYPE& nd) const; //overload ==
+	bool has(const TYPE& nd) const;              //overload ==
+	size_type find(const TYPE& nd) const;        //overload ==
 	size_type count_equal(const TYPE& nd) const; //overload ==
 };
 
@@ -491,7 +491,7 @@ bool arrayListT<TYPE>::empty() const
 }
 
 template<typename TYPE>
-bool arrayListT<TYPE>::non_Empty() const
+bool arrayListT<TYPE>::non_empty() const
 {
 	return !empty();
 }
@@ -541,8 +541,8 @@ public:
 
 	//other functions==============================
 	TYPE sum() const;
-	TYPE findMin() const;
-	TYPE findMax() const;
+	TYPE min() const;
+	TYPE max() const;
 	size_type findMinIdx() const;
 	size_type findMaxIdx() const;
 	//fill ----------------------------------------
@@ -669,7 +669,7 @@ TYPE arrayListV<TYPE>::sum() const
 	return sum;
 }
 template<typename TYPE>
-TYPE arrayListV<TYPE>::findMin() const
+TYPE arrayListV<TYPE>::min() const
 {
 	assert(this->m_p!=NULL);
 	TYPE min = this->m_p[0];
@@ -681,7 +681,7 @@ TYPE arrayListV<TYPE>::findMin() const
 	return min;
 }
 template<typename TYPE>
-TYPE arrayListV<TYPE>::findMax() const
+TYPE arrayListV<TYPE>::max() const
 {
 	assert(this->m_p!=NULL);
 	TYPE max = this->m_p[0];
