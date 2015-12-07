@@ -927,10 +927,13 @@ void _2_node_interplolate( //
 			arridx,  //data index
 			tmp_arrres   //data res
 			);
+	// if po is not leaf
+	arrayList tmp_arrrespo(arridx.size());
+	T_cal_averange_value_from_leaf(po, arridx, tmp_arrrespo);
 	for (int i = 0; i < arridx.size(); ++i) {
 		Float x = po->cell->getCenterPoint()[axis] + dis;
 		Float x1 = po->cell->getCenterPoint()[axis];
-		Float y1 = po->data->aCenterData[arridx[i]];
+		Float y1 = tmp_arrrespo[i];
 		Float x2 = tmp_point[axis];
 		Float y2 = tmp_arrres[i];
 		arrres[i] = linear_interpolation(x, x1, y1, x2, y2);
@@ -1236,8 +1239,8 @@ void _interpolate_1order_on_axis( // 2D QuadTree Node
 			_2_node_interplolate(pn,  //node
 					ps,  //node
 					(dis < 0) ? -1 : 1, //dir = 1 or -1
-					axis, //axix
-					dis,   //distance to center of pn
+					axis,   //axix
+					dis,    //distance to center of pn
 					arridx,  //data index
 					arrres);
 		}
@@ -1583,9 +1586,9 @@ void interpolate_gradient_at_center( // 2D QuadTree Node
 	_IF_TRUE_RETRUN(pn==NULL_PTR);
 	arrayList arrres_m(arridx.size());
 	arrayList arrres_p(arridx.size());
-	interpolate_1order_weight_on_face(pn, AXIS_TO_2_DIRECTION[axis][0], arridx,
+	interpolate_1order_on_face(pn, AXIS_TO_2_DIRECTION[axis][0], arridx,
 			arrres_m);
-	interpolate_1order_weight_on_face(pn, AXIS_TO_2_DIRECTION[axis][1], arridx,
+	interpolate_1order_on_face(pn, AXIS_TO_2_DIRECTION[axis][1], arridx,
 			arrres_p);
 	for (int i = 0; i < arridx.size(); ++i) {
 		Float x1 = pn->cell->get(axis, eCPL_M);  //the width of the cell
@@ -1991,8 +1994,8 @@ int _gradient_center_node_LS( //
 	for (int i = 0; i <= 7; ++i) {
 		pQTNode pnei = pn->getNeighborFast(toDirection(i));
 		if (pnei != NULL_PTR) {
-			getListpNode_direction(pnei,
-					oppositeDirection(toDirection(i)), lpnei);
+			getListpNode_direction(pnei, oppositeDirection(toDirection(i)),
+					lpnei);
 		}
 	}
 	Float a1 = 0; // sum_w_dx_dx =0;
@@ -2045,8 +2048,8 @@ int _interpolate_node_LS(  // 2D QuadTree Node Least Square
 		for (int i = 0; i <= 7; ++i) {
 			pQTNode pnei = pn->getNeighborFast(toDirection(i));
 			if (pnei != NULL_PTR) {
-				getListpNode_direction(pnei,
-						oppositeDirection(toDirection(i)), lpnei);
+				getListpNode_direction(pnei, oppositeDirection(toDirection(i)),
+						lpnei);
 			}
 		}
 		Float a1 = 0; // sum_w_dx_dx =0;
@@ -2810,8 +2813,57 @@ void _output_ms_segments( //
 	}
 }
 
+void _output_ms_segments( //
+		std::ostringstream& sst, //
+		const ListT<Segment2D>& ls, //
+		const ListT<Pair<int, int> >& lidx, //
+		const arrayList& alevel) {
+	_IF_TRUE_RETRUN(ls.empty());
+	ListT<Segment2D>::const_iterator seg_iter = ls.begin();
+	int nums = 0;
+	for (ListT<Pair<int, int> >::const_iterator iter = lidx.begin();
+			iter != lidx.end();) {
+		nums++;
+		sst << seg_iter->PSX() << " " << seg_iter->PSY();
+		sst << iter->second << " " << alevel[iter->second] << "\n";
+		sst << seg_iter->PEX() << " " << seg_iter->PEY();
+		sst << iter->second << " " << alevel[iter->second] << "\n\n";
+		if (iter->first == nums) {
+			++iter;
+			nums = 0;
+		}
+		++seg_iter;
+	}
+}
+
 void _draw_gnuplot_as_contour_line( // 2D QuadTree
 		FILE *data, //data
+		pQTNode pnode, //list node
+		LarusDef::size_type idx, //idx x
+		const arrayList& alevel) {
+	if (pnode->data != NULL_PTR) {
+		arrayList aval(4), ares(1);
+		arrayList_st aidx(1);
+		aidx[0] = idx;
+		const SPDirection index_dir[4] = { SPD_MM, SPD_PM, SPD_PP, SPD_MP };
+		//  0       1       2       3
+		arrayListT<Point2D> aloc(4);
+		for (int i = 0; i < 4; ++i) {
+			//get value on vertex =====================
+			interpolate_1order_on_vertex_averange_neighbor(pnode, index_dir[i],
+					aidx, ares);
+			aval[i] = ares[0];
+			aloc[i] = pnode->getPoint(index_dir[i]); //get point location
+		}
+		ListT<Segment2D> ls;                   //list Segment2D
+		ListT<Pair<int, int> > lidx;           //list index segment
+		_ms_many_levels(aloc, aval, pnode->data->aCenterData[idx], alevel, ls,
+				lidx);
+		_output_ms_segments(data, ls, lidx, alevel);
+	}
+}
+void _draw_gnuplot_as_contour_line( // 2D QuadTree
+		std::ostringstream& data, //data
 		pQTNode pnode, //list node
 		LarusDef::size_type idx, //idx x
 		const arrayList& alevel) {
@@ -2921,6 +2973,7 @@ void draw_gnuplot_as_contour(  // 2D QuadTree
 	}
 	fclose(data);
 }
+
 void show_gnuplot_as_contour( // 2D QuadTree
 		Forest2D& forest,       //tree
 		LarusDef::size_type idx //idx x
@@ -2957,9 +3010,46 @@ void show_gnuplot_as_contour( // 2D QuadTree
 	} else {
 		gp.set_cbrange(min, max);
 	}
-
 	std::ostringstream ss;
 	gp.set_xlabel(ss.str());
+	//gp.set_equal_ratio();
+	//gp.set_xrange(4,6.5);
 	gp.plot_7(lxc, lyc, lxm, lxp, lym, lyp, lval, cmdstr);
+}
+
+void show_gnuplot_as_contour_line( // 2D QuadTree
+		Forest2D& forest,       //tree
+		LarusDef::size_type idx, //idx x
+		LarusDef::size_type nl  //number of level
+		) {
+	// max and mind
+	Float max = get_max_value(forest, idx);
+	Float min = get_min_value(forest, idx);
+	Gnuplot gp("lines");
+	gp.set_palette_blue_red();
+	//gp.set_equal_ratio();
+	//gp.set_xrange(4,6.5);
+	std::string cmdstr = "plot \"-\" using 1:2:3 with lines title \"\" lc palette";
+	gp.cmd(cmdstr);
+	// data
+	if (max == min) {
+		gp.set_cbrange(ABS(max), -ABS(min));
+	} else {
+		gp.set_cbrange(min, max);
+	}
+	arrayList alevel(nl);
+	//cal level
+	Float d = (max - min) / (nl + 1);
+	for (int i = 0; i < nl; i++) {
+		alevel[i] = min + (i + 1) * d;
+	}
+	std::ostringstream ss;
+	gp.set_xlabel(ss.str());
+	for (Forest2D::iterator iter = forest.begin(); iter != forest.end();
+			iter++) {
+		std::ostringstream sst;
+		_draw_gnuplot_as_contour_line(sst, &(*iter), idx, alevel);
+		gp.cmd(sst.str());
+	}
 }
 }  //end of namespace

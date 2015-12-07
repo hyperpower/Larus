@@ -55,6 +55,7 @@ public:
 	typedef typename DIM_TYPE::pPoint pPoint;
 
 	typedef typename DIM_TYPE::size_type size_type;
+
 private:
 	//data ======================================
 	int m_col;

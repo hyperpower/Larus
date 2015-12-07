@@ -29,6 +29,7 @@
 #include "../test/test_poisson.h"
 #include "../test/test_advection.h"
 #include "../test/test_opencl.h"
+#include "../test/test_flow.h"
 #include "IO/IO_vtk.h"
 //#include "../test/test_python.h"
 //#include "../test/test_opencl.h"
@@ -54,7 +55,7 @@ int main() {
 	//test_sp1();
 	//show_opencl_info();
 	//vector_dot();
-	test_initial_film();
+	run_test_vorticity();
 	cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
 	return 0;
 }

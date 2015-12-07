@@ -29,6 +29,7 @@
 #include "../src/Utility/Array.h"
 #include "../src/Utility/ArrayList.h"
 
+#include "test_gerris.h"
 #include <sstream>
 #include <iostream>
 #include <iomanip>
@@ -48,7 +49,8 @@ const string strDIR =
 		"/home/czhou/Gerris/Taylor_data/Expansion/exp-re31eo100r1.4L4/";
 #endif
 
-void cal_surface(GerrisFileAdp<Dimension_2D>& gfa, ListT<Segment2D>& list) {
+inline void cal_surface(GerrisFileAdp<Dimension_2D>& gfa,
+		ListT<Segment2D>& list) {
 	getListSegment( //
 			list, //list Segment
 			gfa.forest, //forest
@@ -59,7 +61,7 @@ void cal_surface(GerrisFileAdp<Dimension_2D>& gfa, ListT<Segment2D>& list) {
 			);
 }
 
-Float get_head_x(const ListT<Segment2D>& sg) {
+inline Float get_head_x(const ListT<Segment2D>& sg) {
 	assert(sg.size() > 0);
 	Float res = sg.begin()->PSX();
 	for (ListT<Segment2D>::const_iterator iter = sg.begin(); iter != sg.end();
@@ -72,7 +74,7 @@ Float get_head_x(const ListT<Segment2D>& sg) {
 	return res;
 }
 
-Float get_tail_x(const ListT<Segment2D>& sg) {
+inline Float get_tail_x(const ListT<Segment2D>& sg) {
 	assert(sg.size() > 0);
 	Float res = sg.begin()->PSX();
 	for (ListT<Segment2D>::const_iterator iter = sg.begin(); iter != sg.end();
@@ -85,7 +87,7 @@ Float get_tail_x(const ListT<Segment2D>& sg) {
 	return res;
 }
 
-Float get_tail_xc(const ListT<Segment2D>& sg) {
+inline Float get_tail_xc(const ListT<Segment2D>& sg) {
 	assert(sg.size() > 0);
 	Float head_x = get_head_x(sg);
 	Float tail_x = get_tail_x(sg);
@@ -102,7 +104,7 @@ Float get_tail_xc(const ListT<Segment2D>& sg) {
 	return MIN(iters->PSX(), iters->PEX());
 }
 
-Float get_surface_max_y(const ListT<Segment2D>& sg) {
+inline Float get_surface_max_y(const ListT<Segment2D>& sg) {
 	assert(sg.size() > 0);
 	Float res = sg.begin()->PSY();
 	for (ListT<Segment2D>::const_iterator iter = sg.begin(); iter != sg.end();
@@ -115,7 +117,7 @@ Float get_surface_max_y(const ListT<Segment2D>& sg) {
 	return res;
 }
 
-Segment2D get_surface_max_segment(const ListT<Segment2D>& sg) {
+inline Segment2D get_surface_max_segment(const ListT<Segment2D>& sg) {
 	assert(sg.size() > 0);
 	Float res = sg.begin()->PSY();
 	Segment2D resseg;
@@ -130,7 +132,8 @@ Segment2D get_surface_max_segment(const ListT<Segment2D>& sg) {
 	return resseg;
 }
 
-void get_bubble_velocity(const ListT<pQTNode>& lnode, Float& u, Float& v) {
+inline void get_bubble_velocity(const ListT<pQTNode>& lnode, Float& u,
+		Float& v) {
 	Float area = 0;
 	Float sumveou = 0;
 	Float sumveov = 0;
@@ -159,7 +162,7 @@ void get_bubble_velocity(const ListT<pQTNode>& lnode, Float& u, Float& v) {
 	v = sumveov / area;
 }
 
-void get_center_of_bubble(ListT<pQTNode>& listpn, Float& x, Float& y) {
+inline void get_center_of_bubble(ListT<pQTNode>& listpn, Float& x, Float& y) {
 	Float area = 0;
 	Float sumveox = 0;
 	Float sumveoy = 0;
@@ -188,17 +191,6 @@ void get_center_of_bubble(ListT<pQTNode>& listpn, Float& x, Float& y) {
 	y = sumveoy / area;
 }
 
-string setfilename(string prefix, int group, Float i, string end) {
-	stringstream ss;
-	//ss << group << "-" << i << "-resEnd.txt";
-	ss << prefix << group;
-	ss.precision(2);
-	ss.setf(std::ios::fixed, std::ios::floatfield);
-	ss << "-" << i << end << ".txt";
-	string str = ss.str();
-	return str;
-}
-
 string setfilename(string prefix, Float i, string end) {
 	stringstream ss;
 	//ss << group << "-" << i << "-resEnd.txt";
@@ -206,28 +198,6 @@ string setfilename(string prefix, Float i, string end) {
 	ss.precision(2);
 	ss.setf(std::ios::fixed, std::ios::floatfield);
 	ss << "" << i << end << ".txt";
-	string str = ss.str();
-	return str;
-}
-
-string get_gerrisfilename(int group, Float i) {
-	stringstream ss;
-	//ss << group << "-" << i << "-resEnd.txt";
-	ss << "re-" << group;
-	ss.precision(2);
-	ss.setf(std::ios::fixed, std::ios::floatfield);
-	ss << "-" << i << ".txt";
-	string str = ss.str();
-	return str;
-}
-
-string get_gerrisfilename(Float i) {
-	stringstream ss;
-	//ss << group << "-" << i << "-resEnd.txt";
-	ss << "re";
-	ss.precision(2);
-	ss.setf(std::ios::fixed, std::ios::floatfield);
-	ss << "-" << i << ".txt";
 	string str = ss.str();
 	return str;
 }
@@ -298,22 +268,6 @@ void seperate_surface(const Float& tail_x,    //
 			b_sur.push_back((*iter));
 		}
 	}
-}
-
-void new_gerris_file(GerrisFileAdp<Dimension_2D>*& gfa, string dir, int group,
-		Float time) {
-	//string filename = get_gerrisfilename(group, time);
-	string filename = get_gerrisfilename(time);
-	string strss = dir + filename;
-	Point2D op(-0.25, 0.0);  //intial point
-	int lmin = 5;            //level min
-	int lmax = 8;            //level MAX
-	Float boxl = 0.5;        //box lenght
-	gfa = new GerrisFileAdp<Dimension_2D>(strss, lmin, lmax, op, boxl);
-	gfa->forest.ConnectTrees();
-	//
-	//gfa->show_file_info();
-	//gfa->forest.show_info();
 }
 
 void basic_sig(Forest2D& f, arrayListT<utPointer>& arg) //0->8
@@ -472,8 +426,8 @@ void run_test() {
 
 	int group = 3;
 	Float t_str = 0;
-	Float t_end = 25;
-	Float dt = 0.2;
+	Float t_end = 40;
+	Float dt = 0.1;
 	out_put_time_idx(dir_outg + "time_idx.txt", t_str, t_end, dt);
 	int ic = 0;
 
@@ -536,8 +490,6 @@ void run_test() {
 				dir_out + setfilename("_neckp_", t, ""), p_neck, 1);
 		//p_neck.show();
 
-		//
-
 		delete gfa;
 		ic++;
 		cout << "File  ---> ";
@@ -556,10 +508,75 @@ void run_test() {
 	drawtofile_gnuplot(dir_outg + "line_sig_1.4.txt", listsig, 1);
 	cout << "Finish run =====================\n" << endl;
 }
+// get max y less then  lt short for less than
+inline int get_max_y_lt_sigl(const ListT<Segment2D>& list_sur, const Float sigl,
+		Float& x, Float& y) {
+	// y always greater than 0, if not,
+	// return -1, there is no surface segment less than sigl.
+	ListT<Segment2D>::const_iterator iter = list_sur.begin();
+	y = -1;
+	int flag = 0;
+	for (; iter != list_sur.end(); ++iter) {
+		if (iter->PSX() < sigl) {
+			flag = 1;
+			if (iter->PSY() > y) {
+				y = iter->PSY();
+				x = iter->PSX();
+			}
+		}
+		if (iter->PEX() < sigl) {
+			flag = 1;
+			if (iter->PEY() > y) {
+				y = iter->PEY();
+				x = iter->PEX();
+			}
+		}
+	}
+	return flag == 0 ? -1 : 0;
+}
+//ge short for greater equal
+inline int get_max_y_ge_sigl(const ListT<Segment2D>& list_sur, const Float sigl,
+		Float& x, Float& y) {
+	// y always greater than 0, if not,
+	// return -1, there is no surface segment less than sigl.
+	ListT<Segment2D>::const_iterator iter = list_sur.begin();
+	y = -1;
+	int flag = 0;
+	for (; iter != list_sur.end(); ++iter) {
+		if (iter->PSX() >= sigl) {
+			flag = 1;
+			if (iter->PSY() > y) {
+				y = iter->PSY();
+				x = iter->PSX();
+			}
+		}
+		if (iter->PEX() < sigl) {
+			flag = 1;
+			if (iter->PEY() > y) {
+				y = iter->PEY();
+				x = iter->PEX();
+			}
+		}
+	}
+	return (flag == 0) ? -1 : 0;
+}
+
+inline Float get_max_y_at_x(const ListT<Segment2D>& list_sur, Float x) {
+	for (ListT<Segment2D>::const_iterator iter = list_sur.begin();
+			iter != list_sur.end(); ++iter) {
+		Float xmin = MIN(iter->PSX(), iter->PEX());
+		Float xmax = MAX(iter->PSX(), iter->PEX());
+		if (isInRange(xmin, x, xmax, Range_cc)) {
+			return (iter->PSY() + iter->PEY()) / 2.0;
+		}
+	}
+	return 0.0;
+}
+
 void run_test_contraction() {
-	string dir = "/home/czhou/Gerris/Taylor_data/Contraction/re135eo150r0.90L4/";
+	string dir = "/home/czhou/Gerris/Taylor_data/Contraction/re59eo50r0.90L4/";
 	//known value
-	const Float sigx = 10.5;
+	const Float sigx = 5.25;  //old sigx = 5.25  new = 5.75
 
 	arrayListT<utPointer> arg(12);
 
@@ -570,10 +587,16 @@ void run_test_contraction() {
 
 	int group = 3;
 	Float t_str = 0;
-	Float t_end = 30;
+	Float t_end = 30; //old t = 30  new = 40
 	Float dt = 0.1;
 	out_put_time_idx(dir_outg + "time_idx.txt", t_str, t_end, dt);
 	int ic = 0;
+
+	//initial max y =====================================
+	arrayList arr_max_x(1000);
+	arrayList arr_max_y(1000);
+	arr_max_x.assign_forward(0.0, 0.05);
+	arr_max_y.assign(0.0);
 
 	for (Float t = t_str; t <= t_end; t += dt) {
 		//arg set =====================
@@ -627,6 +650,13 @@ void run_test_contraction() {
 		drawtofile_gnuplot(  //
 				dir_out + setfilename("_sur_", t, ""), l_surface, 1);
 		//
+		// get max y
+		for (arrayList::size_type i = 0; i < arr_max_y.size(); i++) {
+			Float y = get_max_y_at_x(l_surface, arr_max_x[i]);
+			if (y > arr_max_y[i]) {
+				arr_max_y[i] = y;
+			}
+		}
 
 		//neck_sig(gfa->forest, arg);
 		//out_put_neck_point
@@ -634,7 +664,20 @@ void run_test_contraction() {
 		//		dir_out + setfilename("_neckp_", t, ""), p_neck, 1);
 		//p_neck.show();
 
-		//
+		// output velocity on min level --------------
+		arrayList_st arridx(2);
+		arridx[0] = Gerris_U;
+		arridx[1] = Gerris_V;
+		ListT<Pair<Point2D, arrayList> > arrres;
+		get_average_value_on_level(gfa->forest, 5, arridx, arrres);
+		cout << " num points :" << arrres.size() << std::endl;
+		stringstream dfn;
+		dfn << dir_out << "_veo";
+		dfn.precision(2);
+		dfn.setf(std::ios::fixed, std::ios::floatfield);
+		dfn << "_" << t << ".txt";
+		string str = dfn.str();
+		drawtofile_gnuplot(str, arrres, 1);
 
 		delete gfa;
 		ic++;
@@ -643,8 +686,29 @@ void run_test_contraction() {
 				<< setw(10) << setprecision(5) << head_x << endl;
 	}
 
+	//out_put_surface
+	drawtofile_gnuplot(  //
+			dir_outg + "max_r.txt", arr_max_x, arr_max_y, 1);
+
+	ListT<Point2D> listsig;
+	//list point
+	//location of x  sig length  zmin  zsig   zmax
+	generate_solid_sig(listsig, 0.5, -0.025, -0.25, sigx, 15);
+	drawtofile_gnuplot(dir_outg + "line_sig_0.95.txt", listsig, 1);
+	generate_solid_sig(listsig, 0.5, -0.05, -0.25, sigx, 15);
+	drawtofile_gnuplot(dir_outg + "line_sig_0.90.txt", listsig, 1);
+	generate_solid_sig(listsig, 0.5, -0.075, -0.25, sigx, 15);
+	drawtofile_gnuplot(dir_outg + "line_sig_0.85.txt", listsig, 1);
+	generate_solid_sig(listsig, 0.5, -0.10, -0.25, sigx, 15);
+	drawtofile_gnuplot(dir_outg + "line_sig_0.80.txt", listsig, 1);
+	generate_solid_sig(listsig, 0.5, -0.125, -0.25, sigx, 15);
+	drawtofile_gnuplot(dir_outg + "line_sig_0.75.txt", listsig, 1);
+	generate_solid_sig(listsig, 0.5, -0.15, -0.25, sigx, 15);
+	drawtofile_gnuplot(dir_outg + "line_sig_0.70.txt", listsig, 1);
+
 	cout << "Finish run =====================\n" << endl;
 }
+
 void pressure_on_centerline() {
 	const string dir =
 			"/Volumes/Untitled/Taylor_data/Expansion/exp-re100eo100r1.2L4/";
@@ -900,9 +964,78 @@ void ffr_straight_velocity() {
 		Float x = 0;
 		Float y = 0;
 		get_center_of_bubble(listpn, x, y);
-		cout << " u = " << u << "  v = " << v << " utrans = "<< -utrans <<endl;
+		cout << " u = " << u << "  v = " << v << " utrans = " << -utrans
+				<< endl;
 		delete gfa;
 	}
+}
+
+void run_test_vorticity() {
+	string dir = "/home/czhou/Gerris/Taylor_data/Contraction/re59eo50r0.90L4/";
+	//known value
+	//const Float sigx = 5.25;  //old sigx = 5.25  new = 5.75
+	arrayListT<utPointer> arg(12);
+	//loop for group ===============================
+	string dir_ori = dir + "ori/";
+	string dir_out = dir + "out_each_c/";
+	string dir_outg = dir + "out_group_c/";
+
+	int group = 3;
+	Float t_str = 8;
+	Float t_end = 9; //old t = 30  new = 40
+	Float dt = 0.1;
+	int ic = 0;
+
+	for (Float t = t_str; t <= t_end; t += dt) {
+		//new forest ==================
+		GerrisFileAdp<Dimension_2D>* gfa = NULL_PTR;
+		new_gerris_file(gfa, dir_ori, group, t);
+		std::cout << "new -> " << "t= " << t << "\n";
+		// To do=======================
+		// show info
+		//gfa->forest.show_info();
+		// new add scalar on leaf
+		typename Forest2D::iterator iterf = gfa->forest.begin();
+		LarusDef::size_type nc = iterf->data->aCenterData.size() + 1; //add one for vorticiy
+		resize_array_on_center_leaf(gfa->forest, nc);
+		const LarusDef::size_type IDX_vorticity = nc - 1;  //index of vorticity
+		// calculate vorticiy
+		int i = 0;
+		for (Forest2D::iterator iter = gfa->forest.begin();
+				iter != gfa->forest.end(); ++iter) {
+			pQTNode pn = iter.get_pointer();
+			// \partial v     \partial u
+			// ----------  -  ----------
+			//     x              y
+			arrayList_st arridx(1);        //data index
+			arrayList arrres(1);         //data res
+			arridx[0] = Gerris_V;
+			interpolate_gradient_at_center(pn, CSAxis_X, arridx, arrres);
+			Float dvx = arrres[0];
+			arridx[0] = Gerris_U;
+			interpolate_gradient_at_center(pn, CSAxis_Y, arridx, arrres);
+			Float duy = arrres[0];
+			Float vor = dvx - duy;
+			pn->data->aCenterData[IDX_vorticity] = vor;
+			i++;
+		}
+		// output
+		Float max_v = get_max_value(gfa->forest, IDX_vorticity);
+		Float min_v = get_min_value(gfa->forest, IDX_vorticity);
+		cout.precision(5);
+		cout << "max v  " << max_v << endl;
+		cout << "min v  " << min_v << endl;
+		show_gnuplot_as_contour_line(gfa->forest, IDX_vorticity, 30);
+		// ============================
+		delete gfa;
+		ic++;
+		cout << "File  ---> ";
+		cout << setw(3) << ic << " " << setw(5) << setprecision(2) << t << "  "
+				<< setw(10) << setprecision(5) << endl;
+	}
+
+	cout << "Finish run =====================\n" << endl;
+
 }
 
 }

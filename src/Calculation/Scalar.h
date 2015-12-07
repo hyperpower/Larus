@@ -46,8 +46,8 @@ void plus_scalar_on_leaf( // 2D Forest
 		arrayList_st& arridx,  //data index
 		arrayList& arrval   //data plus
 		);
-void plus_scalar_on_leaf( // 3D Forest
-		Forest3D& forest,  //pQuadTree
+void plus_scalar_on_leaf(   // 3D Forest
+		Forest3D& forest,   //pQuadTree
 		arrayList_st& arridx,  //data index
 		arrayList& arrval   //data plus
 		);
@@ -414,6 +414,11 @@ void draw_gnuplot_as_contour_line(      // 2D QuadTree
 void show_gnuplot_as_contour( // 2D QuadTree
 		Forest2D& forest,       //tree
 		LarusDef::size_type idx //idx x
+		);
+void show_gnuplot_as_contour_line( // 2D QuadTree
+		Forest2D& forest,       //tree
+		LarusDef::size_type idx, //idx x
+		LarusDef::size_type nl  //number of level
 		);
 //check==========================================
 

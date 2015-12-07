@@ -43,10 +43,11 @@ void drawtofile_gnuplot(string filename, const ListT<Point2D>& listp, int mode);
 void drawtofile_gnuplot(string filename, const ListT<Segment2D>& listp,
 		int mode);
 void drawtofile_gnuplot(string filename, const ListT<Arrow2D>&, int mode);
+void drawtofile_gnuplot(string filename, const ListT<Pair<Point2D, arrayList> >&, int mode);
 void drawtofile_gnuplot(string filename, const arrayListT<Segment2D>&,
 		int mode);
 void drawtofile_gnuplot(string filename, const arrayListT<Point2D>&, int mode);
-
+void drawtofile_gnuplot(string filename, const Forest2D&, int mode);
 //void drawtofile_gnuplot(string filename, ListT<pQTNode> list, int mode);
 
 void drawtofile_gnuplot(string filename, const arrayList& arr, int mode);
@@ -183,6 +184,45 @@ inline void gnuplot_inline_data(Gnuplot& gp, const Cell2D& cell) {
 			<< "\n";
 	gp.cmd(ss.str());
 }
+void gnuplot_file_data(FILE* data, const Cell2D& cell);
+
+inline void gnuplot_inline_data(Gnuplot& gp, const QTNodeFace& face) {
+	std::ostringstream ss;
+	switch (face.direction) {
+	case SPD_IM: {
+		ss << face.pnode->cell->get(CSAxis_X, eCPL_M) << " "
+				<< face.pnode->cell->get(CSAxis_Y, eCPL_M) << "\n";
+		ss << face.pnode->cell->get(CSAxis_X, eCPL_M) << " "
+				<< face.pnode->cell->get(CSAxis_Y, eCPL_P) << "\n";
+		break;
+	}
+	case SPD_IP: {
+		ss << face.pnode->cell->get(CSAxis_X, eCPL_P) << " "
+				<< face.pnode->cell->get(CSAxis_Y, eCPL_M) << "\n";
+		ss << face.pnode->cell->get(CSAxis_X, eCPL_P) << " "
+				<< face.pnode->cell->get(CSAxis_Y, eCPL_P) << "\n";
+		break;
+	}
+	case SPD_JP: {
+		ss << face.pnode->cell->get(CSAxis_X, eCPL_M) << " "
+				<< face.pnode->cell->get(CSAxis_Y, eCPL_P) << "\n";
+		ss << face.pnode->cell->get(CSAxis_X, eCPL_P) << " "
+				<< face.pnode->cell->get(CSAxis_Y, eCPL_P) << "\n";
+		break;
+	}
+	case SPD_JM: {
+		ss << face.pnode->cell->get(CSAxis_X, eCPL_M) << " "
+				<< face.pnode->cell->get(CSAxis_Y, eCPL_M) << "\n";
+		ss << face.pnode->cell->get(CSAxis_X, eCPL_P) << " "
+				<< face.pnode->cell->get(CSAxis_Y, eCPL_M) << "\n";
+		break;
+	}
+	default:{
+		ASSERT_MSG(false, " !> Error face direction (gnuplot_inline_data)\n");
+	}
+	}
+	gp.cmd(ss.str());
+}
 inline void gnuplot_show(const pQTNode pnode) {
 	Gnuplot gp("lines");
 	std::ostringstream ss;
@@ -221,6 +261,37 @@ inline void gnuplot_show(const Forest2D& forest) {
 	}
 	gp.cmd("e");
 }
+inline void gnuplot_show_different_level(const Forest2D& forest) {
+	Gnuplot gp("lines");
+	std::ostringstream ss;
+	ss << "plot \"-\" using 1:2 title \"\" " << "with lines lw 1";
+	gp.set_equal_ratio();
+	gp.set_xrange(6, 6.5);
+	gp.cmd(ss.str());
+	ss.str("");
+	for (typename Forest2D::const_iterator_face it = forest.begin_face();
+			it != forest.end_face(); ++it) {
+		if (it->face_type != SPFT_Equal) {
+			gnuplot_inline_data(gp, (*it));
+			gp.cmd("\n");
+		}
+	}
+	gp.cmd("e");
+}
+
+void gnuplot_file_data(FILE* data, const QTNodeFace& face);
+
+inline void gnuplot_datafile_different_level(string filename, const Forest2D& forest) {
+	FILE* data = open_file(filename, 1);
+	for (typename Forest2D::const_iterator_face it = forest.begin_face();
+			it != forest.end_face(); ++it) {
+		if (it->face_type != SPFT_Equal) {
+			gnuplot_file_data(data , (*it));
+			fprintf(data, "\n");
+		}
+	}
+	fclose(data);
+}
 
 //------------------------------------------------
 inline void gnuplot_show(const Exp2D& exp) {
@@ -248,6 +319,7 @@ inline void gnuplot_show(const Exp2D& exp) {
 		}
 	}
 	gp.cmd("e");
+
 }
 
 inline void gnuplot_show_as_contour(const Forest2D& forest, int cv_idx) {
